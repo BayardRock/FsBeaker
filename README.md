@@ -1,20 +1,16 @@
-# ProjectScaffold
+This is a temporary location for this project.
 
-This project can be used to scaffold a prototypical .NET solution including file system layout and tooling. This includes a build process that: 
+# FsBeaker
+* F# implementation for [BeakerNotebook](http://beakernotebook.com/).
 
-* updates all AssemblyInfo files
-* compiles the application and runs all test projects
-* generates [SourceLinks](https://github.com/ctaggart/SourceLink)
-* generates API docs based on XML document tags
-* generates [documentation based on Markdown files](http://fsprojects.github.io/ProjectScaffold/writing-docs.html)
-* generates [NuGet](http://www.nuget.org) packages
-* and allows a simple [one step release process](http://fsprojects.github.io/ProjectScaffold/release-process.html).
+# Installation
+* Download BeakerNotebook(http://beakernotebook.com/getting-started?scroll)
+* Modify `src/main/web/plugin/init` in beaker directory and add the below code
 
-In order to start the scaffolding process run 
+```
+"FSharp": { url : "./plugins/eval/fsharp/fsharp.js", bgColor: "#378BBA", fgColor: "#FFFFFF", borderColor: "", shortName: "F#" }
+```
 
-    $ build.cmd // on windows    
-    $ build.sh  // on mono
-    
-Read the [Getting started tutorial](http://fsprojects.github.io/ProjectScaffold/index.html#Getting-started) to learn more.
-
-Documentation: http://fsprojects.github.io/ProjectScaffold
+* Download [F# plugin binaries](https://github.com/BayardRock/FsBeaker/releases)
+* Copy `{pluginbinaries}/eval/fsharp` directory to `{beakerisntall}/config/plugins/eval/fsharp`
+* Run beaker
