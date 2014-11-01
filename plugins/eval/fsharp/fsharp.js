@@ -182,14 +182,18 @@ define(function (require, exports, module, bkSessionManager)
                     {
                         settings.shellID = id;
                         self.settings = settings;
-                        var cb = function ()
+                        function cb()
                         {
                             if (bkHelper.hasSessionId())
                             {
-                                if (doneCB(self))
+                                var initCode = "let beaker = new NamespaceClient(\"" + bkHelper.getSessionId() + "\")"
+                                self.evaluate(initCode, {}).then(function ()
                                 {
-                                    doneCB(self);
-                                }
+                                    if (doneCB)
+                                    {
+                                        doneCB(self);
+                                    }
+                                });
                             }
                             else
                             {
@@ -198,14 +202,14 @@ define(function (require, exports, module, bkSessionManager)
                                     doneCB(self);
                                 }
                             }
-                        };
+                        }
                         self.updateShell(cb);
                     };
+
                     if (!settings.shellID)
                     {
                         settings.shellID = "";
                     }
-
                     this.newShell(settings.shellID, setShellIdCB);
                     this.perform = function (what)
                     {
@@ -223,7 +227,7 @@ define(function (require, exports, module, bkSessionManager)
 
         // load the syntax highlighter then load everything else
         bkHelper.loadList(["vendor/bower_components/codemirror/mode/mllike/mllike.js", "vendor/bower_components/codemirror/addon/comment/comment.js"], loadedScripts, loadedScripts);
-        
+
     };
     init();
 

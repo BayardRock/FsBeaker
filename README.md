@@ -4,7 +4,7 @@ This is a temporary location for this project.
 * F# implementation for [BeakerNotebook](http://beakernotebook.com/).
 
 # Installation
-* Download BeakerNotebook(http://beakernotebook.com/getting-started?scroll)
+* Download [BeakerNotebook](http://beakernotebook.com/getting-started?scroll)
 * Modify `src/main/web/plugin/init` in beaker directory and add the below code
 
 ```
