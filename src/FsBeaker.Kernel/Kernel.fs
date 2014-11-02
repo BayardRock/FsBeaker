@@ -88,7 +88,12 @@ type ConsoleKernel() =
                 match GetLastExpression() with
                 | Some(it) -> 
                         
-                    let printer = Printers.findDisplayPrinter(it.ReflectionType)
+                    let secondaryType = 
+                        match it.ReflectionValue with
+                        | null -> typeof<obj>
+                        | _ -> it.ReflectionValue.GetType()
+
+                    let printer = Printers.findDisplayPrinter(it.ReflectionType, secondaryType)
                     let (_, callback) = printer
                     callback(it.ReflectionValue)
 

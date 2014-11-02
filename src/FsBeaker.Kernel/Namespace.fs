@@ -56,7 +56,20 @@ type NamespaceClient(session) =
     // Gets the value as a JSON string
     member __.Get(name) = 
         let url = String.Format("{0}/get", urlBase)
-        Http.RequestString
-          ( url, httpMethod = "GET",
-            query   = [ "name", name; "session", session ],
-            headers = [ "Authorization", auth ])
+        let json = 
+            Http.RequestString
+              ( url, httpMethod = "GET",
+                query   = [ "name", name; "session", session ],
+                headers = [ "Authorization", auth ])
+
+        let binding = JsonConvert.DeserializeObject<NamespaceBinding>(json)
+        if not <| binding.Defined then failwithf "name not defined: %s" name
+        binding.Value
+
+    /// Operator for getting
+    static member (?) (ns:NamespaceClient, name) = 
+        ns.Get(name)
+
+    /// Operator for setting data
+    static member (?<-) (ns:NamespaceClient, name, value) = 
+        ns.Set(name, value)

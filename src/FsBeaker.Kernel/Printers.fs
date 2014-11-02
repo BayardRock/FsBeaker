@@ -21,17 +21,25 @@ module Printers =
     let internal defaultDisplayPrinter(x) =
         { ContentType = "text/plain"; Data = sprintf "%A" x }
 
-    /// Finds a display printer based off of the type
-    let internal findDisplayPrinter(findType) = 
+    /// Finds a display printer with the first type that is assignable from the specified type
+    let internal findSingleDisplayPrinter(findType) =
         let printers = 
             displayPrinters
             |> Seq.filter (fun (t, _) -> t.IsAssignableFrom(findType))
             |> Seq.toList
 
-        if printers.Length > 0 then
-            printers.Head
-        else
-            (typeof<obj>, defaultDisplayPrinter)
+        match printers with
+        | [] -> None
+        | _  -> Some printers.Head
+
+    /// Finds a display printer based off of the type
+    let internal findDisplayPrinter(findType, secondaryType) = 
+        match findSingleDisplayPrinter(findType) with
+        | Some(x) -> x
+        | None ->
+            match findSingleDisplayPrinter(secondaryType) with
+            | Some(x) -> x
+            | None -> (typeof<obj>, defaultDisplayPrinter)
 
     /// Adds default display printers
     let internal addDefaultDisplayPrinters() = 
@@ -79,4 +87,9 @@ module Printers =
         // add CombinedPlot printer
         addDisplayPrinter(fun (x:FsBeaker.Charts.CombinedPlot) ->
             { ContentType = "chart"; Data = x }
+        )
+
+        // add JObject printer
+        addDisplayPrinter(fun (x:Newtonsoft.Json.Linq.JObject) ->
+            { ContentType = "text/plain"; Data = x.ToString(Newtonsoft.Json.Formatting.None) }
         )
