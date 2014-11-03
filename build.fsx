@@ -100,10 +100,13 @@ Target "RunTests" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Generate the documentation
 
-Target "GenerateReferenceDocs" (fun _ ->
-    if not <| executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"; "--define:REFERENCE"] [] then
-      failwith "generating reference documentation failed"
-)
+Target "GenerateReferenceDocs" DoNothing
+
+// disable for now    
+//Target "GenerateReferenceDocs" (fun _ ->
+//    if not <| executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"; "--define:REFERENCE"] [] then
+//      failwith "generating reference documentation failed"
+//)
 
 let generateHelp fail =
     if executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"; "--define:HELP"] [] then
@@ -160,7 +163,48 @@ Target "ReleaseDocs" (fun _ ->
     Git.Commit.Commit tempDocsDir (sprintf "Update generated documentation for version %s" release.NugetVersion)
     Branches.push tempDocsDir
 )
+//
+//Target "Deploy" (fun _ ->
+//    !! (buildDir + "/**/*.*") 
+//        -- "*.zip" 
+//        |> Zip buildDir (deployDir + "Calculator." + version + ".zip")
+//)
 
+// Builds a zip file and puts it into the release directory
+Target "CreateZip" (fun _ ->
+
+    // create zee working directory
+    let workingDir = "release/working"
+    workingDir |> CreateDir
+
+    // copy zee binaries to the working directory
+    !! ("src/FsBeaker/bin/Release/*.exe")
+    ++ ("src/FsBeaker/bin/Release/*.exe.config")
+    ++ ("src/FsBeaker/bin/Release/*.dll")
+    ++ ("src/FsBeaker/bin/Release/FSharp.Core.optdata")
+    ++ ("src/FsBeaker/bin/Release/FSharp.Core.sigdata")
+    |> CopyFiles(Path.Combine(workingDir, "eval", "fsharp", "lib"))
+
+    // copy eval files
+    let pluginsDir = Path.Combine(workingDir, "plugins")
+    CopyDir pluginsDir "plugins" (fun _ -> true)
+    
+    // copy other files
+    !! ("README.md")
+    ++ ("RELEASE_NOTES.md")
+    |> CopyFiles(workingDir)
+
+    // finally, zip
+    let zipFileName = "release/Release-" + release.SemVer.ToString() + "-alpha.zip"
+    !! (workingDir + "/**/*.*")
+    |>  Zip workingDir zipFileName
+
+    // cleanup
+    workingDir |> CleanDir
+    workingDir |> DeleteDir
+)
+
+// convenient for testing locally
 Target "CopyFiles" (fun _ ->
     let beakerPluginsDirectory = @"D:\BeakerNotebook1.0\config\plugins"
     CopyRecursive "plugins" beakerPluginsDirectory true |> tracefn "%A"
@@ -170,18 +214,21 @@ Target "CopyFiles" (fun _ ->
 // Run all targets by default. Invoke 'build <Target>' to override
 
 Target "All" DoNothing
-Target "Release" DoNothing
 Target "BuildPackage" DoNothing
+Target "Release" DoNothing
 
 "Clean"
   ==> "AssemblyInfo"
   ==> "Build"
   ==> "RunTests"
-  ==> "CopyFiles"
+  ==> "CreateZip"
   =?> ("GenerateReferenceDocs",isLocalBuild && not isMono)
   =?> ("GenerateDocs",isLocalBuild && not isMono)
   ==> "All"
   =?> ("ReleaseDocs",isLocalBuild && not isMono)
+
+"RunTests"
+  ==> "CopyFiles"
 
 "All" 
   ==> "BuildPackage"

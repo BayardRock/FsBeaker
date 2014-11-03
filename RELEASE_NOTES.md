@@ -1,13 +1,7 @@
-### 1.0 - Unreleased
-* More awesome stuff coming
-* Added SourceLink for Source Indexing PDB
+### 0.2 - November 3, 2014
+* Added CreateZip target to build script
+* Added support for sharing variables
+* General code cleanup
 
-#### 0.5.1-beta - November 6 2013
-* Improved quality of solution-wide README.md files
- 
-#### 0.5.0-beta - October 29 2013
-* Improved quality of solution-wide README.md files
-
-#### 0.0.1-beta - October 24 2013
-* Changed name from fsharp-project-scaffold to FSharp.ProjectScaffold
+### 0.1 - October 30, 2014
 * Initial release
