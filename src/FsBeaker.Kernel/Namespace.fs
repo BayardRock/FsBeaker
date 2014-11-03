@@ -7,7 +7,7 @@ open FSharp.Data
 open Newtonsoft.Json
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type NamespaceBinding = {
+type NamespaceBinding<'T> = {
 
     [<JsonProperty("name")>]
     Name: string
@@ -16,7 +16,7 @@ type NamespaceBinding = {
     Session: string
 
     [<JsonProperty("value")>]
-    Value: obj
+    Value: 'T
 
     [<JsonProperty("defined")>]
     Defined: bool
@@ -62,7 +62,7 @@ type NamespaceClient(session) =
                 query   = [ "name", name; "session", session ],
                 headers = [ "Authorization", auth ])
 
-        let binding = JsonConvert.DeserializeObject<NamespaceBinding>(json)
+        let binding = JsonConvert.DeserializeObject<NamespaceBinding<_>>(json)
         if not <| binding.Defined then failwithf "name not defined: %s" name
         binding.Value
 

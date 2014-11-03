@@ -8,23 +8,48 @@ open System.Diagnostics
 open System.Threading
 open System.Reflection
 
-[<CLIMutable; JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type Table = {
-    columnNames: string[]
-    values: string[][]
+
+    [<JsonProperty("columnNames")>]
+    ColumnNames: string[]
+
+    [<JsonProperty("values")>]
+    Values: string[][]
 }
 
-[<CLIMutable; JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutoCompleteRequest = { code: string; caretPosition: int }
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type AutoCompleteRequest = {
+    
+    [<JsonProperty("code")>]
+    Code: string
+    
+    [<JsonProperty("caretPosition")>]
+    CaretPosition: int
+}
 
-[<CLIMutable; JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutoCompleteResponse = { declarations: string [] }
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type AutoCompleteResponse = {
 
-[<CLIMutable; JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type ExecuteRequest = { code: string }
+    [<JsonProperty("declarations")>]
+    Declarations: string []
+}
 
-[<CLIMutable; JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type ExecuteResponse = { result: BinaryOutput; status: ExecuteReponseStatus }
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type ExecuteRequest = {
+    
+    [<JsonProperty("code")>]
+    Code: string
+}
+
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type ExecuteResponse = {
+    [<JsonProperty("result")>]
+    Result: BinaryOutput
+
+    [<JsonProperty("status")>]
+    Status: ExecuteReponseStatus
+}
 and ExecuteReponseStatus = OK = 0 | Error = 1
 
 [<JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
@@ -101,11 +126,11 @@ type ConsoleKernel() =
                         
                     { ContentType = "text/plain"; Data = "" }
 
-            { result = result; status = ExecuteReponseStatus.OK }
+            { Result = result; Status = ExecuteReponseStatus.OK }
         
         else
 
-            { result = { ContentType = "text/plain"; Data = sbErr.ToString() }; status = ExecuteReponseStatus.Error }
+            { Result = { ContentType = "text/plain"; Data = sbErr.ToString() }; Status = ExecuteReponseStatus.Error }
 
     /// Processes a request to execute some code
     let processExecute(req: ExecuteRequest) =
@@ -117,23 +142,23 @@ type ConsoleKernel() =
         // evaluate
         let response = 
             try
-                eval req.code
+                eval req.Code
             with _ -> 
-                { result = { ContentType = "text/plain"; Data = sbErr.ToString().Trim() }; status = ExecuteReponseStatus.Error }
+                { Result = { ContentType = "text/plain"; Data = sbErr.ToString().Trim() }; Status = ExecuteReponseStatus.Error }
 
         sendObj response
 
     /// Processes a request to perform auto complete. Currently filtering is being performed
     /// here. This can be moved to the client once access to the CodeMirror object is obtained
     let processAutoComplete(req: AutoCompleteRequest) =
-        let (decls, filterString) = GetDeclarations(req.code, req.caretPosition)
+        let (decls, filterString) = GetDeclarations(req.Code, req.CaretPosition)
         let filteredDecls = 
             decls.Items
             |> Seq.filter (fun x -> x.Name.StartsWith(filterString, StringComparison.OrdinalIgnoreCase))
             |> Seq.map (fun x -> x.Name)
             |> Seq.toArray
 
-        sendObj { declarations = filteredDecls }
+        sendObj { Declarations = filteredDecls }
 
     /// Process commands
     let processCommands block = 
@@ -195,7 +220,7 @@ type ConsoleKernelClient(p: Process) =
 
     /// Convenience method for executing a command
     member __.Execute(code) =
-        __.Execute({ code = code })
+        __.Execute({ Code = code })
 
     /// Performs auto complete functionality
     member __.Autocomplete(req: AutoCompleteRequest) =
@@ -205,7 +230,7 @@ type ConsoleKernelClient(p: Process) =
 
     /// Performs auto complete functionality
     member __.Autocomplete(code, caretPosition) =
-        __.Autocomplete({ code = code; caretPosition = caretPosition })
+        __.Autocomplete({ Code = code; CaretPosition = caretPosition })
 
     /// IDisposable, disposes of the process    
     interface IDisposable with

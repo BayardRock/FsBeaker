@@ -119,6 +119,7 @@ define(function (require, exports, module, bkSessionManager)
                         object: ret.result.Data
                     };
                 }
+                modelOutput.elapsedTime = new Date().getTime() - progressObj.object.startTime;
                 bkHelper.refreshRootScope();
                 deferred.resolve();
             });

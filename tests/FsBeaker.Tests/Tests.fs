@@ -19,14 +19,14 @@ type TestClass() =
     """
         let result = client.Execute(code)
         Assert.NotNull(result)
-        Assert.AreEqual("image/png", result.result.ContentType)
+        Assert.AreEqual("image/png", result.Result.ContentType)
 
         let autoComplete = client.Autocomplete(code, 17)
         Assert.NotNull(autoComplete)
-        Assert.AreEqual(68, autoComplete.declarations.Length)
+        Assert.AreEqual(68, autoComplete.Declarations.Length)
 
         let autoComplete2 = client.Autocomplete(code, 18)
         Assert.NotNull(autoComplete2)
-        Assert.AreEqual(7, autoComplete2.declarations.Length)
-        Assert.AreEqual(7, autoComplete2.declarations |> Seq.filter (fun x -> x.StartsWith("m")) |> Seq.length)
+        Assert.AreEqual(7, autoComplete2.Declarations.Length)
+        Assert.AreEqual(7, autoComplete2.Declarations |> Seq.filter (fun x -> x.StartsWith("m")) |> Seq.length)
 

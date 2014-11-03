@@ -1,6 +1,7 @@
 ﻿namespace FsBeaker.Kernel
 
 open System
+open System.Linq
 open System.Text
 open System.Web
 open FSharp.Charting
@@ -23,14 +24,18 @@ module Printers =
 
     /// Finds a display printer with the first type that is assignable from the specified type
     let internal findSingleDisplayPrinter(findType) =
-        let printers = 
+        
+        let find f = 
             displayPrinters
-            |> Seq.filter (fun (t, _) -> t.IsAssignableFrom(findType))
+            |> Seq.filter (fun (t, _) -> f t)
             |> Seq.toList
 
-        match printers with
-        | [] -> None
-        | _  -> Some printers.Head
+        match find (fun x -> x = findType) with
+        | [] -> 
+            match find (fun x -> x.IsAssignableFrom(findType)) with
+            | [] -> None
+            | head :: _ -> Some head
+        | head :: _ -> Some head
 
     /// Finds a display printer based off of the type
     let internal findDisplayPrinter(findType, secondaryType) = 
@@ -89,7 +94,19 @@ module Printers =
             { ContentType = "chart"; Data = x }
         )
 
-        // add JObject printer
-        addDisplayPrinter(fun (x:Newtonsoft.Json.Linq.JObject) ->
-            { ContentType = "text/plain"; Data = x.ToString(Newtonsoft.Json.Formatting.None) }
+        // add JArray printer
+        addDisplayPrinter(fun (x:Newtonsoft.Json.Linq.JArray) ->
+            let strings = 
+                [|
+                    for token in x.Take(50) do 
+                        yield token.ToString(Newtonsoft.Json.Formatting.None) 
+                |]
+
+            let elipsis = if x.Count > 50 then "..." else ""
+            { ContentType = "text/json"; Data = "[" + String.Join(", ", strings) + elipsis + "]" }
+        )
+
+        // add JToken printer
+        addDisplayPrinter(fun (x:Newtonsoft.Json.Linq.JToken) ->
+            { ContentType = "text/json"; Data = x.ToString(Newtonsoft.Json.Formatting.None) }
         )

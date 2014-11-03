@@ -11,41 +11,20 @@ open Newtonsoft.Json
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type EvaluateResponse = {
-    expression: string
-    status: ExecuteReponseStatus
-    result: BinaryOutput
+    [<JsonProperty("expression")>]
+    Expression: string
+
+    [<JsonProperty("status")>]
+    Status: ExecuteReponseStatus
+
+    [<JsonProperty("result")>]
+    Result: BinaryOutput
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type EvaluateRequest = {
     ShellId: string
     Code: string
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type HandShakeResponse = {
-    id: string
-    minimumVersion: string
-    supportedConnectionTypes: string[]
-    successful: bool
-    channel: string
-    clientId: string
-    version: string
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type HandShakeRequestItemAdvice = {
-    timeout: int
-    interval: int
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type HandshakeRequestItem = {
-    id: string
-    version: string
-    minimumVersion: string
-    supportedConnectionTypes: string[]
-    advice: HandShakeRequestItemAdvice
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
@@ -101,18 +80,18 @@ type FSharpController() =
             let shell = findShell req.ShellId
             let res = shell.Execute(code)
             {
-                expression = code
-                status = res.status
-                result = res.result
+                Expression = code
+                Status = res.Status
+                Result = res.Result
             }
         with 
             ex -> 
                 stderr.WriteLine(ex.Message)
                 stderr.WriteLine(ex.StackTrace)
                 {
-                    expression = code
-                    status = ExecuteReponseStatus.Error
-                    result = { ContentType = "text/plain"; Data = ex.Message } 
+                    Expression = code
+                    Status = ExecuteReponseStatus.Error
+                    Result = { ContentType = "text/plain"; Data = ex.Message } 
                 }   
 
     /// Gets the auto completions
@@ -122,7 +101,7 @@ type FSharpController() =
             let shell = findShell req.ShellId
             let code = scrubCode req.Code
             let res = shell.Autocomplete(code, req.CaretPosition)
-            { Declarations = res.declarations }
+            { Declarations = res.Declarations }
         with 
             ex -> 
                 stderr.WriteLine(ex.Message)
