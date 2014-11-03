@@ -211,7 +211,7 @@ type Line() =
     member val Style = StrokeType.SOLID with get, set
 
     [<JsonProperty("interpolation")>]
-    member val Interpolation = 0 with get, set
+    member val Interpolation = 1 with get, set
 
 type Point() = 
     inherit XYGraphics()
