@@ -181,6 +181,7 @@ Target "CreateZip" (fun _ ->
     !! ("src/FsBeaker/bin/Release/*.exe")
     ++ ("src/FsBeaker/bin/Release/*.exe.config")
     ++ ("src/FsBeaker/bin/Release/*.dll")
+    ++ ("src/FsBeaker/bin/Release/Include.fsx")
     ++ ("src/FsBeaker/bin/Release/FSharp.Core.optdata")
     ++ ("src/FsBeaker/bin/Release/FSharp.Core.sigdata")
     |> CopyFiles(Path.Combine(workingDir, "eval", "fsharp", "lib"))
@@ -204,11 +205,21 @@ Target "CreateZip" (fun _ ->
     workingDir |> DeleteDir
 )
 
-// convenient for testing locally
-Target "CopyFiles" (fun _ ->
-    let beakerPluginsDirectory = @"D:\BeakerNotebook1.0\config\plugins"
+let copyFiles() = 
+    let beakerPluginsDirectory = @"D:\BeakerNotebook1.1\config\plugins"
     CopyRecursive "plugins" beakerPluginsDirectory true |> tracefn "%A"
-)
+
+    !! ("src/FsBeaker/bin/Release/*.exe")
+    ++ ("src/FsBeaker/bin/Release/*.exe.config")
+    ++ ("src/FsBeaker/bin/Release/*.dll")
+    ++ ("src/FsBeaker/bin/Release/Include.fsx")
+    ++ ("src/FsBeaker/bin/Release/FSharp.Core.optdata")
+    ++ ("src/FsBeaker/bin/Release/FSharp.Core.sigdata")
+    |> CopyFiles(Path.Combine(beakerPluginsDirectory, "eval", "fsharp", "lib"))
+
+// convenient for testing locally
+Target "CopyFiles" copyFiles
+Target "CopyFilesOnly" copyFiles
 
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override

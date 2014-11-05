@@ -5,15 +5,11 @@ open System
 open Newtonsoft.Json
 open FsBeaker.Charts
 
-let data =
-    [1..100]
-    |> Seq.map float
-    |> Seq.map (fun x -> x, x)
+let data = [1..100] |> Seq.map (fun x -> x, x)
 
-let p = Plot()
-p <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 1"))
-p <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 2"))
-p <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 3"))
-p <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 4"))
-p <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 5"))
-p
+Plot()
+    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 1"))
+    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 2"))
+    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 3"))
+    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 4"))
+    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 5"))

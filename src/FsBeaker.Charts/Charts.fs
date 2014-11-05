@@ -6,6 +6,8 @@ open System.Linq
 open Newtonsoft.Json
 open Newtonsoft.Json.Converters
 
+type value = IConvertible
+
 [<AutoOpen>]
 module BeakerChartInternals = 
     
@@ -113,10 +115,10 @@ type XYGraphics() =
     abstract member Type : string with get
 
     [<JsonProperty("x")>]
-    member val X = [|0.0|] with get, set
+    member val X : obj[] = [||] with get, set
 
     [<JsonProperty("y")>]
-    member val Y = [|0.0|] with get, set
+    member val Y : obj[] = [||] with get, set
 
     [<JsonProperty("visible")>]
     member val Visible = true with get, set
@@ -131,32 +133,32 @@ type XYGraphics() =
     member val Color : string = null with get, set
 
     /// Sets the data from a sequence of tuples
-    member self.Data(data: seq<float * float>) =
-        self.X <- data |> Seq.map fst |> Seq.toArray
-        self.Y <- data |> Seq.map snd |> Seq.toArray
+    member self.Data(data: seq<#value * #value>) =
+        self.X <- data |> Seq.map fst |> Seq.map box |> Seq.toArray
+        self.Y <- data |> Seq.map snd |> Seq.map box |> Seq.toArray
         self
 
     /// Sets the data from a sequence of tuples
-    abstract member Data : seq<float> -> XYGraphics
-    default self.Data(data: seq<float>) =
-        self.X <- data |> Seq.toArray
-        self.Y <- self.X |> Array.mapi (fun i x -> float i)
+    abstract member Data : seq<#value> -> XYGraphics
+    default self.Data(data: seq<#value>) =
+        self.X <- data |> Seq.map box |> Seq.toArray
+        self.Y <- self.X |> Array.mapi (fun i x -> box i)
         self
 
     /// Convenience operator for setting the data
-    static member (<|>) (c : 'T when 'T :> XYGraphics, d : seq<float>) = 
+    static member (<|>) (c : 'T when 'T :> XYGraphics, d : seq<#value>) = 
         c.Data(d) :?> 'T
 
     /// Convenience operator for setting the data
-    static member (<|>) (c : 'T when 'T :> XYGraphics, d : seq<float * float>) =
+    static member (<|>) (c : 'T when 'T :> XYGraphics, d : seq<#value * #value>) =
         c.Data(d) :?> 'T
 
     /// Convenience operator for setting the data
-    static member (<|>) (d : seq<float>, c : 'T when 'T :> XYGraphics) =
+    static member (<|>) (d : seq<#value>, c : 'T when 'T :> XYGraphics) =
         c.Data(d) :?> 'T
 
     /// Convenience operator for setting the data
-    static member (<|>) (d : seq<float * float>, c : 'T when 'T :> XYGraphics) =
+    static member (<|>) (d : seq<#value * #value>, c : 'T when 'T :> XYGraphics) =
         c.Data(d) :?> 'T
 
 type Area() =
@@ -248,9 +250,9 @@ type Point() =
     member val OutlineColors : string[] Option = None with get, set
 
     /// Sets the data from a sequence of tuples
-    override self.Data(data: seq<float>) =
-        self.Y <- data |> Seq.toArray
-        self.X <- self.Y |> Array.mapi (fun i x -> float i)
+    override self.Data(data: seq<#value>) =
+        self.Y <- data |> Seq.map box |> Seq.toArray
+        self.X <- self.Y |> Array.mapi (fun i x -> box i)
         upcast self
 
 type Stem() = 
@@ -404,9 +406,9 @@ type BeakerChartBeta =
         Base            |> Option.iter c.set_Base
         Bases           |> Option.iter c.set_Bases
         Interpolation   |> Option.iter c.set_Interpolation
-        fun (data) -> c <|> data
+        fun (data: seq<#value * #value>) -> c <|> data
 
-    static member Area(data: seq<float * float>, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Interpolation) = 
+    static member Area(data, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Interpolation) = 
         data |> BeakerChartBeta.Area(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Interpolation = Interpolation)
 
     static member Bar(?DisplayName, ?Color, ?Visible, ?Width, ?Widths, ?Base, ?Bases, ?Colors, ?OutlineColor, ?OutlineColors) = 
@@ -421,9 +423,9 @@ type BeakerChartBeta =
         Colors          |> Option.iter c.set_Colors
         OutlineColor    |> Option.iter c.set_OutlineColor
         OutlineColors   |> Option.iter c.set_OutlineColors
-        fun (data) -> c <|> data
+        fun (data: seq<#value * #value>) -> c <|> data
 
-    static member Bar(data: seq<float * float>, ?DisplayName, ?Color, ?Visible, ?Width, ?Widths, ?Base, ?Bases, ?Colors, ?OutlineColor, ?OutlineColors) = 
+    static member Bar(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Width, ?Widths, ?Base, ?Bases, ?Colors, ?OutlineColor, ?OutlineColors) = 
         data |> BeakerChartBeta.Bar(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Widths = Widths, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
 
     static member Line(?DisplayName, ?Color, ?Visible, ?Width, ?Style, ?Interpolation) = 
@@ -434,9 +436,9 @@ type BeakerChartBeta =
         Width           |> Option.iter c.set_Width
         Style           |> Option.iter c.set_Style
         Interpolation   |> Option.iter c.set_Interpolation
-        fun (data) -> c <|> data
+        fun (data: seq<#value * #value>) -> c <|> data
 
-    static member Line(data: seq<float * float>, ?DisplayName, ?Color, ?Visible, ?Width, ?Style, ?Interpolation) = 
+    static member Line(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Width, ?Style, ?Interpolation) = 
         data |> BeakerChartBeta.Line(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Style = Style, ?Interpolation = Interpolation)
     
     static member Point(?DisplayName, ?Color, ?Visible, ?Size, ?Sizes, ?Shape, ?Shapes, ?Fill, ?Fills, ?Colors, ?OutlineColor, ?OutlineColors) = 
@@ -453,9 +455,9 @@ type BeakerChartBeta =
         Colors          |> Option.iter c.set_Colors       
         OutlineColor    |> Option.iter c.set_OutlineColor 
         OutlineColors   |> Option.iter c.set_OutlineColors
-        fun (data) -> c <|> data
+        fun (data: seq<#value * #value>) -> c <|> data
 
-    static member Point(data: seq<float * float>, ?DisplayName, ?Color, ?Visible, ?Size, ?Sizes, ?Shape, ?Shapes, ?Fill, ?Fills, ?Colors, ?OutlineColor, ?OutlineColors) = 
+    static member Point(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Size, ?Sizes, ?Shape, ?Shapes, ?Fill, ?Fills, ?Colors, ?OutlineColor, ?OutlineColors) = 
         data |> BeakerChartBeta.Point(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Size = Size, ?Sizes = Sizes, ?Shape = Shape, ?Shapes = Shapes, ?Fill = Fill, ?Fills = Fills, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
 
     static member Stem(?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
@@ -468,9 +470,9 @@ type BeakerChartBeta =
         Colors          |> Option.iter c.set_Colors
         Style           |> Option.iter c.set_Style 
         Styles          |> Option.iter c.set_Styles
-        fun (data) -> c <|> data
+        fun (data: seq<#value * #value>) -> c <|> data
 
-    static member Stem(data: seq<float * float>, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
+    static member Stem(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
         data |> BeakerChartBeta.Stem(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?Style = Style, ?Styles = Styles)
 
     static member Plot(?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
