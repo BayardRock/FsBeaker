@@ -5,12 +5,10 @@ open System.IO
 open System.Text
 open Newtonsoft.Json
 open System.Diagnostics
-open System.Threading
 open System.Reflection
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type Table = {
-
     [<JsonProperty("columnNames")>]
     ColumnNames: string[]
 
@@ -29,15 +27,36 @@ type AutoCompleteRequest = {
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutoCompleteResponse = {
+type IntellisenseRequest = {
+    [<JsonProperty("code")>]
+    Code: string
+    
+    [<JsonProperty("lineIndex")>]
+    LineIndex: int
 
+    [<JsonProperty("charIndex")>]
+    CharIndex: int
+}
+
+
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type IntellisenseResponse = {
+    [<JsonProperty("declarations")>]
+    Declarations: SimpleDeclaration[]
+
+    [<JsonProperty("startIndex")>]
+    StartIndex: int
+}
+
+
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type AutoCompleteResponse = {
     [<JsonProperty("declarations")>]
     Declarations: string []
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type ExecuteRequest = {
-    
     [<JsonProperty("code")>]
     Code: string
 }
@@ -55,6 +74,7 @@ and ExecuteReponseStatus = OK = 0 | Error = 1
 [<JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type ShellRequest =
     | AutoComplete of AutoCompleteRequest
+    | Intellisense of IntellisenseRequest
     | Execute of ExecuteRequest
 
 [<AutoOpen>]
@@ -74,12 +94,24 @@ module KernelInternals =
             sb.AppendLine(line) |> ignore
             line <- readLine reader
 
-        if line = null then None else Some <| sb.ToString()
+        if line = null then 
+            None 
+        else 
+            let bytes = Convert.FromBase64String(sb.ToString())
+            let json = Encoding.UTF8.GetString(bytes)
+            Some <| json
+
+    /// Serializes an object to a string
+    let serialize(o) =
+        let ser = JsonSerializer()
+        let writer = new StringWriter()
+        ser.Serialize(writer, o)
+        writer.ToString()
         
 /// The console kernel handles console requests and responds by sending
 /// json data back to the console
 type ConsoleKernel() =
-    
+   
     /// Gets the header code to prepend to all items
     let headerCode = 
         let file = FileInfo(Assembly.GetEntryAssembly().Location)
@@ -93,11 +125,11 @@ type ConsoleKernel() =
         stdout.WriteLine(str)
 
     /// Sends an object with the separator
-    let sendObj(o:obj) = 
-        let ser = JsonSerializer()
-        let writer = new StringWriter()
-        ser.Serialize(writer, o)
-        sendLine <| writer.ToString()
+    let sendObj(o) = 
+        let json = JsonConvert.SerializeObject(o)
+        let bytes = Encoding.UTF8.GetBytes(json)
+        let encodedJson = Convert.ToBase64String(bytes)
+        sendLine <| encodedJson
         sendLine <| separator
 
     /// Evaluates the specified code
@@ -143,8 +175,8 @@ type ConsoleKernel() =
         let response = 
             try
                 eval req.Code
-            with _ -> 
-                { Result = { ContentType = "text/plain"; Data = sbErr.ToString().Trim() }; Status = ExecuteReponseStatus.Error }
+            with ex -> 
+                { Result = { ContentType = "text/plain"; Data = ex.Message + ": " + sbErr.ToString() }; Status = ExecuteReponseStatus.Error }
 
         sendObj response
 
@@ -160,11 +192,17 @@ type ConsoleKernel() =
 
         sendObj { Declarations = filteredDecls }
 
+    /// Gets the intellisense information and sends it back
+    let processIntellisense(req: IntellisenseRequest) =
+        let (decls, startIndex) = GetDeclarations2(req.Code, req.LineIndex, req.CharIndex)
+        sendObj { Declarations = decls; StartIndex = startIndex }
+
     /// Process commands
     let processCommands block = 
         let shellRequest = JsonConvert.DeserializeObject<ShellRequest>(block)
         match shellRequest with
         | AutoComplete(x) -> processAutoComplete(x)
+        | Intellisense(x) -> processIntellisense(x)
         | Execute(x) -> processExecute(x)
 
     /// The main loop
@@ -191,18 +229,25 @@ type ConsoleKernelClient(p: Process) =
     let reader = p.StandardOutput
     let writer = p.StandardInput
 
+    /// Sends a line
+    let sendLine(str:string) = 
+        writer.WriteLine(str)
+        writer.Flush()
+
     /// Sends on object to the process
     let sendObj (o:obj) =
         let v = 
             match o with 
             | :? AutoCompleteRequest as x -> AutoComplete(x)
+            | :? IntellisenseRequest as x -> Intellisense(x)
             | :? ExecuteRequest as x -> Execute(x)
             | _ -> failwith "Invalid object to send"
 
         let json = JsonConvert.SerializeObject(v)
-        writer.WriteLine(json)
-        writer.WriteLine(separator)
-        writer.Flush()
+        let bytes = Encoding.UTF8.GetBytes(json)
+        let encodedJson = Convert.ToBase64String(bytes)
+        sendLine <| encodedJson
+        sendLine <| separator
 
     /// Sends an object to the process and blocks until something is sent back
     let sendAndGet o =
@@ -231,6 +276,16 @@ type ConsoleKernelClient(p: Process) =
     /// Performs auto complete functionality
     member __.Autocomplete(code, caretPosition) =
         __.Autocomplete({ Code = code; CaretPosition = caretPosition })
+
+    /// Performs intellisense functionality
+    member __.Intellisense(req: IntellisenseRequest) =
+        match sendAndGet req with
+        | Some (returnJson) -> JsonConvert.DeserializeObject<IntellisenseResponse>(returnJson)
+        | None -> failwith "Stream ended unexpectedly"
+
+    /// Performs intellisense functionality
+    member __.Intellisense(code, lineIndex, charIndex) =
+        __.Intellisense({ Code = code; LineIndex = lineIndex; CharIndex = charIndex })
 
     /// IDisposable, disposes of the process    
     interface IDisposable with

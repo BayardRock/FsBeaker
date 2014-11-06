@@ -363,6 +363,19 @@ type XYChart() =
         c.AssignColors()
         c
 
+    /// Convenience operator for adding a graphics to the list of graphics objects
+    static member (<|>) (g : XYGraphics seq, c : #XYChart) =
+        c.XYGraphics <- c.XYGraphics @ [yield! g]
+        c.AssignColors()
+        c
+    
+    /// Convenience operator for adding a graphics to the list of graphics objects
+    static member (<|>) (c : #XYChart, g : XYGraphics seq) =
+        c.XYGraphics <- c.XYGraphics @ [yield! g]
+        c.AssignColors()
+        c
+
+
 type Plot() =
     inherit XYChart()
         override __.Type = "Plot"

@@ -35,6 +35,14 @@ type AutocompleteRequest = {
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
+type IntellisenseRequest = {
+    ShellId: string
+    Code: string
+    LineIndex: int
+    CharIndex: int
+}
+
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type AutocompleteResponse = {
     Declarations: string[]
 }
@@ -100,13 +108,26 @@ type FSharpController() =
         try
             let shell = findShell req.ShellId
             let code = scrubCode req.Code
-            let res = shell.Autocomplete(code, req.CaretPosition)
-            { Declarations = res.Declarations }
+            shell.Autocomplete(code, req.CaretPosition)
         with 
             ex -> 
                 stderr.WriteLine(ex.Message)
                 stderr.WriteLine(ex.StackTrace)
                 { Declarations = [||] }
+
+    /// Gets intellisense
+    [<HttpPost>]
+    member __.Intellisense(req: IntellisenseRequest) =
+
+        try
+            let shell = findShell req.ShellId
+            let code = scrubCode req.Code
+            shell.Intellisense(code, req.LineIndex, req.CharIndex)
+        with 
+            ex -> 
+                stderr.WriteLine(ex.Message)
+                stderr.WriteLine(ex.StackTrace)
+                { Declarations = [||]; StartIndex = 0 }
 
     /// Stubbed out for later
     [<HttpPost>]

@@ -206,7 +206,8 @@ Target "CreateZip" (fun _ ->
 )
 
 let copyFiles() = 
-    let beakerPluginsDirectory = @"D:\BeakerNotebook1.1\config\plugins"
+//    let beakerPluginsDirectory = @"D:\BeakerNotebook1.1\config\plugins"
+    let beakerPluginsDirectory = @"C:\BeakerNotebook1.0\config\plugins"
     CopyRecursive "plugins" beakerPluginsDirectory true |> tracefn "%A"
 
     !! ("src/FsBeaker/bin/Release/*.exe")

@@ -18,15 +18,13 @@
  * FSharp eval plugin
  * For creating and config evaluators that evaluate FSharp code and update code cell results.
  */
-define(function (require, exports, module, bkSessionManager)
+define(function (require, exports, bkSessionManager)
 {
     'use strict';
     var PLUGIN_NAME = "FSharp";
     var COMMAND = "fsharp/fsharpPlugin";
     var serviceBase = null;
-    var subscriptions = {};
-
-    var initialized = false;
+    var timer = null;
     var FSharp = {
         pluginName: PLUGIN_NAME,
         cmMode: "text/x-fsharp",
@@ -187,7 +185,7 @@ define(function (require, exports, module, bkSessionManager)
                         {
                             if (bkHelper.hasSessionId())
                             {
-                                var initCode = "let beaker = new NamespaceClient(\"" + bkHelper.getSessionId() + "\")"
+                                var initCode = "let beaker = new NamespaceClient(\"" + bkHelper.getSessionId() + "\")";
                                 self.evaluate(initCode, {}).then(function ()
                                 {
                                     if (doneCB)
@@ -217,6 +215,70 @@ define(function (require, exports, module, bkSessionManager)
                         var action = this.spec[what].action;
                         this[action]();
                     };
+
+                    function applyIntellisense()
+                    {
+                        $('.CodeMirror').each(function (idx, div)
+                        {
+                            var editor = div.CodeMirror;
+                            if (editor.options.mode === 'text/x-fsharp' && !editor.intellisense)
+                            {
+                                var intellisense = new CodeMirrorIntellisense(editor);
+                                editor.intellisense = intellisense;
+                                intellisense.addDeclarationTrigger({ keyCode: 190, type: 'up' }); // `.`
+                                intellisense.addDeclarationTrigger({ keyCode: 32, ctrlKey: true, preventDefault: true, type: 'down' }); // `ctrl+space`
+                                intellisense.addDeclarationTrigger({ keyCode: 191 }); // `/`
+                                intellisense.addDeclarationTrigger({ keyCode: 220 }); // `\`
+                                intellisense.addDeclarationTrigger({ keyCode: 222 }); // `"`
+                                intellisense.addDeclarationTrigger({ keyCode: 222, shiftKey: true }); // `"`
+                                intellisense.addMethodsTrigger({ keyCode: 57, shiftKey: true }); // `(`
+                                intellisense.addMethodsTrigger({ keyCode: 48, shiftKey: true });// `)`
+                                intellisense.onMethod(function (item, position)
+                                {
+
+                                });
+                                intellisense.onDeclaration(function (item, position)
+                                {
+                                    var cursor = editor.doc.getCursor();
+                                    var line = editor.getLine(cursor.line);
+                                    var isSlash = item.keyCode === 191 || item.keyCode === 220;
+                                    var isQuote = item.keyCode === 222;
+
+                                    var isLoadOrRef = line.indexOf('#load') === 0
+                                        || line.indexOf('#r') === 0;
+
+                                    var isStartLoadOrRef = line === '#load "'
+                                        || line === '#r "'
+                                        || line === '#load @"'
+                                        || line === '#r @"';
+
+                                    if (isSlash && !isLoadOrRef)
+                                    {
+                                        return;
+                                    }
+                                    if (isQuote && !isStartLoadOrRef)
+                                    {
+                                        return;
+                                    }
+
+                                    var self = this;
+                                    $.ajax({
+                                        type: "POST",
+                                        datatype: "json",
+                                        url: serviceBase + "/fsharp/intellisense",
+                                        data: { shellId: settings.shellID, code: editor.getValue(), lineIndex: cursor.line, charIndex: cursor.ch }
+                                    }).done(function (x)
+                                    {
+                                        intellisense.setDeclarations(x.declarations);
+                                        intellisense.setStartColumnIndex(x.startIndex);
+                                    });
+                                });
+                                console.log('Intellisense applied to cell');
+                            }
+                        });
+                        timer = setTimeout(applyIntellisense, 1000);
+                    }
+                    timer = setTimeout(applyIntellisense, 1000);
                 };
                 FSharpShell.prototype = FSharp;
                 shellReadyDeferred.resolve(FSharpShell);
@@ -227,7 +289,17 @@ define(function (require, exports, module, bkSessionManager)
         }
 
         // load the syntax highlighter then load everything else
-        bkHelper.loadList(["vendor/bower_components/codemirror/mode/mllike/mllike.js", "vendor/bower_components/codemirror/addon/comment/comment.js"], loadedScripts, loadedScripts);
+        $('head').append($('<link rel="stylesheet" type="text/css" />').attr('href', 'plugins/eval/fsharp/custom.css'));
+        var scripts =
+            [
+                "vendor/bower_components/codemirror/mode/mllike/mllike.js",
+                "vendor/bower_components/codemirror/addon/comment/comment.js",
+                "plugins/eval/fsharp/webintellisense.js",
+                "plugins/eval/fsharp/webintellisense-codemirror.js",
+                "plugins/eval/fsharp/webintellisense-codemirror-fsharp.js"
+            ];
+
+        bkHelper.loadList(scripts, loadedScripts, loadedScripts);
 
     };
     init();

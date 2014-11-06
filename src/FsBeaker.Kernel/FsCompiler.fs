@@ -12,6 +12,7 @@ open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.SimpleSourceCodeServices
+open Newtonsoft.Json
 
 type DynamicAssembly = 
     {
@@ -29,11 +30,19 @@ type TooltipInfo =
         Tooltip: string;
     }
 
+[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type SimpleDeclaration =
     {
+        [<JsonProperty("documentation")>]
         Documentation: string
+
+        [<JsonProperty("glyph")>]
         Glyph: int
+
+        [<JsonProperty("name")>]
         Name: string
+
+        [<JsonProperty("value")>]
         Value: string
     }
 
@@ -88,6 +97,46 @@ module FsCompilerInternals =
         match m with
         | File -> 1000
         | Folder -> 1001
+
+    /// Formats a comment into a string
+    let buildFormatComment (xmlCommentRetriever: string * string -> string) cmt (sb: StringBuilder) =
+        match cmt with
+        | FSharpXmlDoc.Text(s) -> sb.AppendLine(s) |> ignore
+        | FSharpXmlDoc.XmlDocFileSignature(file, signature) ->
+            let comment = xmlCommentRetriever (file, signature)
+            if (not (comment.Equals(null))) && comment.Length > 0 then sb.AppendLine(comment) |> ignore
+        | FSharpXmlDoc.None -> ()
+
+    /// Converts a ToolTipElement into a string
+    let buildFormatElement isSingle el (sb: StringBuilder) xmlCommentRetriever =
+        
+        match el with
+        | FSharpToolTipElement.None -> ()
+        | FSharpToolTipElement.Single(it, comment) ->
+            sb.AppendLine(it) |> buildFormatComment xmlCommentRetriever comment
+        | FSharpToolTipElement.Group(items) ->
+            let items, msg =
+                if items.Length > 10 then
+                    (items |> Seq.take 10 |> List.ofSeq),
+                    sprintf "   (+%d other overloads)" (items.Length - 10)
+                else items, null
+            if isSingle && items.Length > 1 then
+                sb.AppendLine("Multiple overloads") |> ignore
+            for (it, comment) in items do
+                sb.AppendLine(it) |> buildFormatComment xmlCommentRetriever comment
+            if msg <> null then sb.AppendFormat(msg) |> ignore
+        | FSharpToolTipElement.CompositionError(err) ->
+            sb.Append("Composition error: " + err) |> ignore
+
+    /// Formats a DataTipText into a string
+    let formatTip (tip, xmlCommentRetriever) =
+        
+        let commentRetriever = defaultArg xmlCommentRetriever (fun _ -> "")
+        let sb = new StringBuilder()
+        match tip with
+        | FSharpToolTipText.FSharpToolTipText([single]) -> buildFormatElement true single sb commentRetriever
+        | FSharpToolTipText.FSharpToolTipText(its) -> for item in its do buildFormatElement false item sb commentRetriever
+        sb.ToString().Trim('\n', '\r')
 
     let getPreprocessorIntellisense baseDirectory charIndex (line:string) = 
     
@@ -233,44 +282,13 @@ type FsCompiler (executingDirectory : string) =
     member this.Checker = checker
 
     /// Formats a comment into a string
-    member this.BuildFormatComment (xmlCommentRetriever: string * string -> string) cmt (sb: StringBuilder) =
-        match cmt with
-        | FSharpXmlDoc.Text(s) -> sb.AppendLine(s) |> ignore
-        | FSharpXmlDoc.XmlDocFileSignature(file, signature) ->
-            let comment = xmlCommentRetriever (file, signature)
-            if (not (comment.Equals(null))) && comment.Length > 0 then sb.AppendLine(comment) |> ignore
-        | FSharpXmlDoc.None -> ()
+    member this.BuildFormatComment (xmlCommentRetriever: string * string -> string) cmt (sb: StringBuilder) = buildFormatComment xmlCommentRetriever cmt sb
 
     /// Converts a ToolTipElement into a string
-    member this.BuildFormatElement isSingle el (sb: StringBuilder) xmlCommentRetriever =
-        
-        match el with
-        | FSharpToolTipElement.None -> ()
-        | FSharpToolTipElement.Single(it, comment) ->
-            sb.AppendLine(it) |> this.BuildFormatComment xmlCommentRetriever comment
-        | FSharpToolTipElement.Group(items) ->
-            let items, msg =
-                if items.Length > 10 then
-                    (items |> Seq.take 10 |> List.ofSeq),
-                    sprintf "   (+%d other overloads)" (items.Length - 10)
-                else items, null
-            if isSingle && items.Length > 1 then
-                sb.AppendLine("Multiple overloads") |> ignore
-            for (it, comment) in items do
-                sb.AppendLine(it) |> this.BuildFormatComment xmlCommentRetriever comment
-            if msg <> null then sb.AppendFormat(msg) |> ignore
-        | FSharpToolTipElement.CompositionError(err) ->
-            sb.Append("Composition error: " + err) |> ignore
+    member this.BuildFormatElement isSingle el (sb: StringBuilder) xmlCommentRetriever = buildFormatElement isSingle el sb xmlCommentRetriever
             
     /// Formats a DataTipText into a string
-    member this.FormatTip (tip, xmlCommentRetriever) =
-        
-        let commentRetriever = defaultArg xmlCommentRetriever (fun _ -> "")
-        let sb = new StringBuilder()
-        match tip with
-        | FSharpToolTipText.FSharpToolTipText([single]) -> this.BuildFormatElement true single sb commentRetriever
-        | FSharpToolTipText.FSharpToolTipText(its) -> for item in its do this.BuildFormatElement false item sb commentRetriever
-        sb.ToString().Trim('\n', '\r')
+    member this.FormatTip (tip, xmlCommentRetriever) = formatTip(tip, xmlCommentRetriever)
 
     /// Tries to figure out the names to pass to GetDeclarations or GetMethods.
     member this.ExtractNames (line, charIndex) = extractNames(line, charIndex)

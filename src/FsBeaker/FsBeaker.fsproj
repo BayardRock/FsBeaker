@@ -29,7 +29,7 @@
     <StartAction>Project</StartAction>
     <StartProgram>
     </StartProgram>
-    <StartArguments>D:\BeakerNotebook1.1\beaker.command.bat</StartArguments>
+    <StartArguments>C:\BeakerNotebook1.0\beaker.command.bat</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -50,6 +50,13 @@
     <Reference Include="FSharp.Compiler.Service">
       <HintPath>..\..\packages\FSharp.Compiler.Service.0.0.73\lib\net45\FSharp.Compiler.Service.dll</HintPath>
       <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.Data">
+      <HintPath>..\..\packages\FSharp.Data.2.0.15\lib\net40\FSharp.Data.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="FSharp.Data.DesignTime">
+      <HintPath>..\..\packages\FSharp.Data.2.0.15\lib\net40\FSharp.Data.DesignTime.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Owin">
       <HintPath>..\..\packages\Microsoft.Owin.3.0.0\lib\net45\Microsoft.Owin.dll</HintPath>
