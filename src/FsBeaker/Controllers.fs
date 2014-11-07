@@ -28,23 +28,11 @@ type EvaluateRequest = {
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutocompleteRequest = {
-    ShellId: string
-    Code: string
-    CaretPosition: int
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type IntellisenseRequest = {
     ShellId: string
     Code: string
     LineIndex: int
     CharIndex: int
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutocompleteResponse = {
-    Declarations: string[]
 }
 
 [<AutoOpen>]
@@ -101,19 +89,6 @@ type FSharpController() =
                     Status = ExecuteReponseStatus.Error
                     Result = { ContentType = "text/plain"; Data = ex.Message } 
                 }   
-
-    /// Gets the auto completions
-    [<HttpPost>]
-    member __.Autocomplete(req: AutocompleteRequest) =
-        try
-            let shell = findShell req.ShellId
-            let code = scrubCode req.Code
-            shell.Autocomplete(code, req.CaretPosition)
-        with 
-            ex -> 
-                stderr.WriteLine(ex.Message)
-                stderr.WriteLine(ex.StackTrace)
-                { Declarations = [||] }
 
     /// Gets intellisense
     [<HttpPost>]

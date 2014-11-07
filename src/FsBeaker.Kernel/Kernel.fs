@@ -17,16 +17,6 @@ type Table = {
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutoCompleteRequest = {
-    
-    [<JsonProperty("code")>]
-    Code: string
-    
-    [<JsonProperty("caretPosition")>]
-    CaretPosition: int
-}
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type IntellisenseRequest = {
     [<JsonProperty("code")>]
     Code: string
@@ -38,7 +28,6 @@ type IntellisenseRequest = {
     CharIndex: int
 }
 
-
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type IntellisenseResponse = {
     [<JsonProperty("declarations")>]
@@ -46,13 +35,6 @@ type IntellisenseResponse = {
 
     [<JsonProperty("startIndex")>]
     StartIndex: int
-}
-
-
-[<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
-type AutoCompleteResponse = {
-    [<JsonProperty("declarations")>]
-    Declarations: string []
 }
 
 [<CLIMutable(); JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
@@ -73,7 +55,6 @@ and ExecuteReponseStatus = OK = 0 | Error = 1
 
 [<JsonObject(MemberSerialization = MemberSerialization.OptOut)>]
 type ShellRequest =
-    | AutoComplete of AutoCompleteRequest
     | Intellisense of IntellisenseRequest
     | Execute of ExecuteRequest
 
@@ -180,28 +161,15 @@ type ConsoleKernel() =
 
         sendObj response
 
-    /// Processes a request to perform auto complete. Currently filtering is being performed
-    /// here. This can be moved to the client once access to the CodeMirror object is obtained
-    let processAutoComplete(req: AutoCompleteRequest) =
-        let (decls, filterString) = GetDeclarations(req.Code, req.CaretPosition)
-        let filteredDecls = 
-            decls.Items
-            |> Seq.filter (fun x -> x.Name.StartsWith(filterString, StringComparison.OrdinalIgnoreCase))
-            |> Seq.map (fun x -> x.Name)
-            |> Seq.toArray
-
-        sendObj { Declarations = filteredDecls }
-
     /// Gets the intellisense information and sends it back
     let processIntellisense(req: IntellisenseRequest) =
-        let (decls, startIndex) = GetDeclarations2(req.Code, req.LineIndex, req.CharIndex)
+        let (decls, startIndex) = GetDeclarations(req.Code, req.LineIndex, req.CharIndex)
         sendObj { Declarations = decls; StartIndex = startIndex }
 
     /// Process commands
     let processCommands block = 
         let shellRequest = JsonConvert.DeserializeObject<ShellRequest>(block)
         match shellRequest with
-        | AutoComplete(x) -> processAutoComplete(x)
         | Intellisense(x) -> processIntellisense(x)
         | Execute(x) -> processExecute(x)
 
@@ -238,7 +206,6 @@ type ConsoleKernelClient(p: Process) =
     let sendObj (o:obj) =
         let v = 
             match o with 
-            | :? AutoCompleteRequest as x -> AutoComplete(x)
             | :? IntellisenseRequest as x -> Intellisense(x)
             | :? ExecuteRequest as x -> Execute(x)
             | _ -> failwith "Invalid object to send"
@@ -266,16 +233,6 @@ type ConsoleKernelClient(p: Process) =
     /// Convenience method for executing a command
     member __.Execute(code) =
         __.Execute({ Code = code })
-
-    /// Performs auto complete functionality
-    member __.Autocomplete(req: AutoCompleteRequest) =
-        match sendAndGet req with
-        | Some (returnJson) -> JsonConvert.DeserializeObject<AutoCompleteResponse>(returnJson)
-        | None -> failwith "Stream ended unexpectedly"
-
-    /// Performs auto complete functionality
-    member __.Autocomplete(code, caretPosition) =
-        __.Autocomplete({ Code = code; CaretPosition = caretPosition })
 
     /// Performs intellisense functionality
     member __.Intellisense(req: IntellisenseRequest) =

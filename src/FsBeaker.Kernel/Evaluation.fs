@@ -28,50 +28,37 @@ module Evaluation =
             idx <- idx + 1
         lines, idx, offset
 
-    /// Old way of getting the declarations (the official way that beaker supports)
-    let GetDeclarations(source, character) = 
-        let (lines, lineIndex, charIndex) = PreprocessSource(source, character)
-        let (parse, c1, c2) = fsiEval.ParseAndCheckInteraction(source)
-        let line = lines.[lineIndex]
-        let (names, startIdx) = FsCompilerInternals.extractNames(line, charIndex)
-        let filterString = line.Substring(startIdx, charIndex - startIdx)
-        let decls = 
-            c1.GetDeclarationListInfo(Some(parse), lineIndex + 1, charIndex + 1, line, names, filterString)
-            |> Async.RunSynchronously
-
-        decls, filterString
-
     /// New way of getting the declarations
-    let GetDeclarations2(source, lineIndex, charIndex) = 
+    let GetDeclarations(source, lineIndex, charIndex) = 
         
-        let (parse, tcr, c2) = fsiEval.ParseAndCheckInteraction(source)
+        let (parse, tcr, _) = fsiEval.ParseAndCheckInteraction(source)
         let lines = source.Split([| '\n' |])
         let line = lines.[lineIndex]
-        let (names, startIdx) = extractNames(line, charIndex)
-        let filterString = line.Substring(startIdx, charIndex - startIdx)
         let preprocess = getPreprocessorIntellisense "." charIndex line
-
         match preprocess with
         | None ->
+            match extractNames(line, charIndex) with
+            | Some (names, startIdx) ->
 
-            let getValue(str:string) =
-                if str.Contains(" ") then "``" + str + "``" else str
+                let filterString = line.Substring(startIdx, charIndex - startIdx)
+                let getValue(str:string) =
+                    if str.Contains(" ") then "``" + str + "``" else str
 
-            // get declarations for a location
-            let names, filterStartIndex = extractNames(line, charIndex)
-            let decls = 
-                tcr.GetDeclarationListInfo(Some(parse), lineIndex + 1, charIndex, line, names, filterString)
-                |> Async.RunSynchronously
+                // get declarations for a location
+                let decls = 
+                    tcr.GetDeclarationListInfo(Some(parse), lineIndex + 1, charIndex, line, names, filterString)
+                    |> Async.RunSynchronously
 
-            let items = 
-                decls.Items
-                |> Seq.map (fun x -> { Documentation = formatTip(x.DescriptionText, None); Glyph = x.Glyph; Name = x.Name; Value = getValue x.Name })
-                |> Seq.toArray
+                let items = 
+                    decls.Items
+                    |> Seq.map (fun x -> { Documentation = formatTip(x.DescriptionText, None); Glyph = x.Glyph; Name = x.Name; Value = getValue x.Name })
+                    |> Seq.toArray
 
-            (items, filterStartIndex)
-
+                (items, startIdx)
+            | None -> 
+                ([||], charIndex)
         | Some(x) -> 
-            
+
             let items = 
                 x.Matches
                 |> Array.map (fun x -> { Documentation = matchToDocumentation x; Glyph = matchToGlyph x.MatchType; Name = x.Name; Value = x.Name })

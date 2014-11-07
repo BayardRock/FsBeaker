@@ -31,15 +31,6 @@ type TestClass() =
         Assert.NotNull(result)
         Assert.AreEqual("image/png", result.Result.ContentType)
 
-        let autoComplete = client.Autocomplete(code, 17)
-        Assert.NotNull(autoComplete)
-        Assert.AreEqual(68, autoComplete.Declarations.Length)
-
-        let autoComplete2 = client.Autocomplete(code, 18)
-        Assert.NotNull(autoComplete2)
-        Assert.AreEqual(7, autoComplete2.Declarations.Length)
-        Assert.AreEqual(7, autoComplete2.Declarations |> Seq.filter (fun x -> x.StartsWith("m")) |> Seq.length)
-
         let intellisense = client.Intellisense(code, 1, 7)
         Assert.NotNull(intellisense)
         Assert.AreEqual(68, intellisense.Declarations.Length)

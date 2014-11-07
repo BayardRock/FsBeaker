@@ -157,7 +157,9 @@ define(function (require, exports, bkSessionManager)
             }).success(cb);
         },
 
-        spec: {}
+        spec: {
+            useIntellisense: { type: "settableBoolean", action: "updateShell", name: "Use Intellisense" }
+        }
     };
 
     var shellReadyDeferred = bkHelper.newDeferred();
@@ -239,11 +241,6 @@ define(function (require, exports, bkSessionManager)
                                 });
                                 intellisense.onDeclaration(function (item, position)
                                 {
-                                    if (editor.options.mode !== 'text/x-fsharp')
-                                    {
-                                        return;
-                                    }
-
                                     var cursor = editor.doc.getCursor();
                                     var line = editor.getLine(cursor.line);
                                     var isSlash = item.keyCode === 191 || item.keyCode === 220;
@@ -274,8 +271,19 @@ define(function (require, exports, bkSessionManager)
                                         data: { shellId: settings.shellID, code: editor.getValue(), lineIndex: cursor.line, charIndex: cursor.ch }
                                     }).done(function (x)
                                     {
-                                        intellisense.setDeclarations(x.declarations);
-                                        intellisense.setStartColumnIndex(x.startIndex);
+                                        if (x.declarations.length > 1)
+                                        {
+                                            var decls = intellisense.getDecls();
+                                            intellisense.setDeclarations(x.declarations);
+                                            intellisense.setStartColumnIndex(x.startIndex);
+
+                                            // if there is only one item after choosing it, just insert it
+                                            if (decls.getFilteredDeclarations().length === 1)
+                                            {
+                                                decls.setSelectedIndex(0);
+                                                decls.triggerItemChosen(decls.getSelectedItem());
+                                            }
+                                        }
                                     });
                                 });
                                 console.log('Intellisense applied to cell');
@@ -304,7 +312,6 @@ define(function (require, exports, bkSessionManager)
             ];
 
         bkHelper.loadList(scripts, loadedScripts, loadedScripts);
-
     };
     init();
 

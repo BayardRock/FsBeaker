@@ -351,30 +351,33 @@ type XYChart() =
             if String.IsNullOrWhiteSpace(g.Color) then g.Color <- getColor i
             i <- i + 1
 
+    /// Adds the graphics to the XYGraphics list
+    member self.Graphs(g: XYGraphics) =
+        self.XYGraphics <- self.XYGraphics @ [g]
+        self.AssignColors()
+        self
+
+    /// Adds the graphics to the XYGraphics list
+    member self.Graphs(g: XYGraphics seq) =
+        self.XYGraphics <- self.XYGraphics @ [yield! g]
+        self.AssignColors()
+        self
+
     /// Convenience operator for adding a graphics to the list of graphics objects
     static member (<|>) (c : #XYChart, g : XYGraphics) =
-        c.XYGraphics <- c.XYGraphics @ [g]
-        c.AssignColors()
-        c
+        c.Graphs(g)
 
     /// Convenience operator for adding a graphics to the list of graphics objects
     static member (<|>) (g : XYGraphics, c : #XYChart) =
-        c.XYGraphics <- c.XYGraphics @ [g]
-        c.AssignColors()
-        c
+        c.Graphs(g)
 
     /// Convenience operator for adding a graphics to the list of graphics objects
     static member (<|>) (g : XYGraphics seq, c : #XYChart) =
-        c.XYGraphics <- c.XYGraphics @ [yield! g]
-        c.AssignColors()
-        c
+        c.Graphs(g)
     
     /// Convenience operator for adding a graphics to the list of graphics objects
     static member (<|>) (c : #XYChart, g : XYGraphics seq) =
-        c.XYGraphics <- c.XYGraphics @ [yield! g]
-        c.AssignColors()
-        c
-
+        c.Graphs(g)
 
 type Plot() =
     inherit XYChart()
@@ -409,7 +412,7 @@ type CombinedPlot() =
 
 /// Static class convenient for generating charts and plots
 /// data |> BeakerChartBeta.Line |> BeakerChartBeta.Plot
-type BeakerChartBeta = 
+type BkChart = 
 
     static member Area(?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Interpolation) = 
         let c = Area()
@@ -422,7 +425,7 @@ type BeakerChartBeta =
         fun (data: seq<#value * #value>) -> c <|> data
 
     static member Area(data, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Interpolation) = 
-        data |> BeakerChartBeta.Area(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Interpolation = Interpolation)
+        data |> BkChart.Area(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Interpolation = Interpolation)
 
     static member Bar(?DisplayName, ?Color, ?Visible, ?Width, ?Widths, ?Base, ?Bases, ?Colors, ?OutlineColor, ?OutlineColors) = 
         let c = Bar()
@@ -439,7 +442,7 @@ type BeakerChartBeta =
         fun (data: seq<#value * #value>) -> c <|> data
 
     static member Bar(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Width, ?Widths, ?Base, ?Bases, ?Colors, ?OutlineColor, ?OutlineColors) = 
-        data |> BeakerChartBeta.Bar(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Widths = Widths, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
+        data |> BkChart.Bar(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Widths = Widths, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
 
     static member Line(?DisplayName, ?Color, ?Visible, ?Width, ?Style, ?Interpolation) = 
         let c = Line()
@@ -452,7 +455,7 @@ type BeakerChartBeta =
         fun (data: seq<#value * #value>) -> c <|> data
 
     static member Line(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Width, ?Style, ?Interpolation) = 
-        data |> BeakerChartBeta.Line(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Style = Style, ?Interpolation = Interpolation)
+        data |> BkChart.Line(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Width = Width, ?Style = Style, ?Interpolation = Interpolation)
     
     static member Point(?DisplayName, ?Color, ?Visible, ?Size, ?Sizes, ?Shape, ?Shapes, ?Fill, ?Fills, ?Colors, ?OutlineColor, ?OutlineColors) = 
         let c = Point()
@@ -471,7 +474,7 @@ type BeakerChartBeta =
         fun (data: seq<#value * #value>) -> c <|> data
 
     static member Point(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Size, ?Sizes, ?Shape, ?Shapes, ?Fill, ?Fills, ?Colors, ?OutlineColor, ?OutlineColors) = 
-        data |> BeakerChartBeta.Point(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Size = Size, ?Sizes = Sizes, ?Shape = Shape, ?Shapes = Shapes, ?Fill = Fill, ?Fills = Fills, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
+        data |> BkChart.Point(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Size = Size, ?Sizes = Sizes, ?Shape = Shape, ?Shapes = Shapes, ?Fill = Fill, ?Fills = Fills, ?Colors = Colors, ?OutlineColor = OutlineColor, ?OutlineColors = OutlineColors)
 
     static member Stem(?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
         let c = Stem()
@@ -486,7 +489,7 @@ type BeakerChartBeta =
         fun (data: seq<#value * #value>) -> c <|> data
 
     static member Stem(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
-        data |> BeakerChartBeta.Stem(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?Style = Style, ?Styles = Styles)
+        data |> BkChart.Stem(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?Style = Style, ?Styles = Styles)
 
     static member Plot(?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
         let p = Plot()
@@ -513,4 +516,4 @@ type BeakerChartBeta =
         fun gfx -> p <|> gfx
 
     static member Plot(gfx: XYGraphics, ?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
-        gfx |> BeakerChartBeta.Plot(?Width = Width, ?Height = Height, ?Title = Title, ?XLabel = XLabel, ?YLabel = YLabel, ?ShowLegend = ShowLegend, ?UseToolTip = UseToolTip, ?ConstantLines = ConstantLines, ?ConstantBands = ConstantBands, ?Texts = Texts, ?YAxes = YAxes, ?XLowerMargin = XLowerMargin, ?XUpperMargin = XUpperMargin, ?XAutoRange = XAutoRange, ?XLowerBound = XLowerBound, ?XUpperBound = XUpperBound, ?LogX = LogX, ?LogY = LogY, ?TimeZone = TimeZone, ?Crosshair = Crosshair)
+        gfx |> BkChart.Plot(?Width = Width, ?Height = Height, ?Title = Title, ?XLabel = XLabel, ?YLabel = YLabel, ?ShowLegend = ShowLegend, ?UseToolTip = UseToolTip, ?ConstantLines = ConstantLines, ?ConstantBands = ConstantBands, ?Texts = Texts, ?YAxes = YAxes, ?XLowerMargin = XLowerMargin, ?XUpperMargin = XUpperMargin, ?XAutoRange = XAutoRange, ?XLowerBound = XLowerBound, ?XUpperBound = XUpperBound, ?LogX = LogX, ?LogY = LogY, ?TimeZone = TimeZone, ?Crosshair = Crosshair)

@@ -497,6 +497,14 @@ var DeclarationsIntellisense = function ()
     var filterText = '';
     var filterModes =
         {
+            auto: function (item, filterText)
+            {
+                if (declarations.length > 100)
+                {
+                    return filterModes.contains(item, filterText);
+                }
+                return filterModes.startsWith(item, filterText);
+            },
             startsWith: function (item, filterText)
             {
                 return item.name.toLowerCase().indexOf(filterText) === 0;
@@ -506,7 +514,7 @@ var DeclarationsIntellisense = function ()
                 return item.name.toLowerCase().indexOf(filterText) >= 0;
             }
         };
-    var filterMode = filterModes.startsWith;
+    var filterMode = filterModes.auto;
 
     // ui widgets
     var selectedElement = null;
@@ -794,6 +802,15 @@ var DeclarationsIntellisense = function ()
         return visible;
     }
 
+    /**
+     * Triggers an item chosen by the user or programatically. This will cause
+     * the event to fire and any subscribers will be called.
+     * 
+     * @param {DeclartionItem} item - The item chosen.
+     * @function triggerItemChosen
+     */
+    this.triggerItemChosen = triggerItemChosen;
+
     /** 
      * Setter for the filter text. When set, the items displayed are
      * automatically filtered
@@ -911,4 +928,11 @@ var DeclarationsIntellisense = function ()
      * @function handleKeyDown
      */
     this.handleKeyDown = handleKeyDown;
+
+    /**
+     * Gets the declarations that are currently shown on the screen.
+     * @function getFilteredDeclarations
+     * @returns {DeclarationItem[]}
+     */
+    this.getFilteredDeclarations = function () { return filteredDeclarations };
 };
