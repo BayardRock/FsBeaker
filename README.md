@@ -19,3 +19,11 @@ This is a temporary location for this project.
 
 * [Graphs example](http://sharing.beakernotebook.com/gist/anonymous/3de61b0b2f258b2f140b)
 * [Auto translation example](http://sharing.beakernotebook.com/gist/anonymous/74dfd416da6ade4ebfe5)
+
+#Features
+* FSharp.Charting support
+* Beaker charts support
+* Intellisense
+
+![Intellisense for References](https://raw.githubusercontent.com/BayardRock/FsBeaker/master/docs/files/img/intellisense-reference.gif "Intellisense for References")
+![Intellisense for WorldBankData](https://raw.githubusercontent.com/BayardRock/FsBeaker/master/docs/files/img/intellisense-worldbank.gif "Intellisense for WorldBankData")
