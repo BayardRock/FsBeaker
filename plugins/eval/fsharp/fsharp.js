@@ -239,6 +239,11 @@ define(function (require, exports, bkSessionManager)
                                 });
                                 intellisense.onDeclaration(function (item, position)
                                 {
+                                    if (editor.options.mode !== 'text/x-fsharp')
+                                    {
+                                        return;
+                                    }
+
                                     var cursor = editor.doc.getCursor();
                                     var line = editor.getLine(cursor.line);
                                     var isSlash = item.keyCode === 191 || item.keyCode === 220;
@@ -295,8 +300,7 @@ define(function (require, exports, bkSessionManager)
                 "vendor/bower_components/codemirror/mode/mllike/mllike.js",
                 "vendor/bower_components/codemirror/addon/comment/comment.js",
                 "plugins/eval/fsharp/webintellisense.js",
-                "plugins/eval/fsharp/webintellisense-codemirror.js",
-                "plugins/eval/fsharp/webintellisense-codemirror-fsharp.js"
+                "plugins/eval/fsharp/webintellisense-codemirror.js"
             ];
 
         bkHelper.loadList(scripts, loadedScripts, loadedScripts);
