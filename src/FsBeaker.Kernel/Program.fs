@@ -1,6 +1,5 @@
 ﻿open FsBeaker.Kernel
 open System.IO
-open System.Threading
 
 [<EntryPoint>]
 let main _ = 
@@ -13,16 +12,19 @@ let main _ =
         0
     with 
         ex -> 
+            let log(msg) = 
+                try File.AppendAllText("log.txt", msg) with _ -> ()
+                stdout.WriteLine(msg)
+
             let err = Evaluation.sbErr.ToString()
             let std = Evaluation.sbOut.ToString()
 
-            stdout.WriteLine("Evaluation ERR: " + err)
-            stdout.WriteLine("Evaluation STD: " + std)
+            log ("Evaluation ERR: " + err)
+            log ("Evaluation STD: " + std)
 
-            stdout.WriteLine("Stack trace:")
-            stdout.WriteLine(ex.Message)
-            stdout.WriteLine(ex.CompleteStackTrace())
+            log ("Stack trace:")
+            log (ex.Message)
+            log (ex.CompleteStackTrace())
+            log ("")
             
-            File.AppendAllText("log.txt", ex.Message)
-            File.AppendAllText("log.txt", ex.CompleteStackTrace())
             -1

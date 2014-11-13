@@ -1,3 +1,7 @@
+### 0.3.1 - November 13, 2014
+* Added *With* method for beaker charts
+* Added more logging to FsBeaker.Kernel.exe
+
 ### 0.3 - November 11, 2014
 * More consistent Intellisense
 * Code cleanup
