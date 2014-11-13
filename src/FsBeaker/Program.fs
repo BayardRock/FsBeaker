@@ -32,7 +32,6 @@ let main args =
             server.Start()
 
             stdout.WriteLine("Successfully started server")
-            stdout.WriteLine("Port: {0}", port)
             let _ = stdin.ReadLine()
             0
         with ex ->

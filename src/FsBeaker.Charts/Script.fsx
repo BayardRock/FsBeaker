@@ -7,9 +7,21 @@ open FsBeaker.Charts
 
 let data = [1..100] |> Seq.map (fun x -> x, x)
 
+let plot = 
+    [
+        BkChart.Line (data, DisplayName = "Hello 1")
+        BkChart.Line (data, DisplayName = "Hello 3")
+        BkChart.Line (data, DisplayName = "Hello 4")
+        BkChart.Line (data, DisplayName = "Hello 5")
+        BkChart.Line (data, DisplayName = "Hello 2")
+    ]
+    |> BkChart.Plot
+
 Plot()
-    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 1"))
-    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 2"))
-    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 3"))
-    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 4"))
-    <|> (data |> BeakerChartBeta.Line (DisplayName = "Hello 5"))
+    .WithHeight(640)
+    .Graphs(
+        [
+            Line().Data([0..100])
+            Area().Data([100..200])
+        ]
+    )

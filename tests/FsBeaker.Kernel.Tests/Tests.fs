@@ -32,7 +32,7 @@ type Tests() =
         | Some(names, _) -> Assert.AreEqual([|"a"|], names)
         | None           -> Assert.Fail("Names should be returned")
 
-        // check GetDeclarations2
+        // check GetDeclarations
         let code, lineIndex, charIndex = codeAndLocation "1 |> fun x -> System.String().||"
         let decls, _ = Evaluation.GetDeclarations(code, lineIndex, charIndex)
         Assert.AreEqual(35, decls.Length)
