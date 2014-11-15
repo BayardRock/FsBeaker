@@ -35,6 +35,10 @@ module BeakerChartInternals =
         let str = String.Join(", ", [| for v in variables do yield "?" + v + " = " + v |])
         str
 
+    /// Converts an option to a bool None -> false, _ -> true
+    let internal shouldSerialize(o) =
+        match o with None -> false | _ -> true
+
 
 
 type ConstantLine() = class end
@@ -229,9 +233,7 @@ type Point() =
     [<JsonProperty("shape")>]
     member val Shape = ShapeType.DEFAULT with get, set
 
-    /// TODO: don't serialize to null if None, just don't serialize the property
     [<JsonProperty("shapes")>]
-    [<JsonIgnore()>]
     member val Shapes : ShapeType[] Option = None with get, set
 
     [<JsonProperty("fill")>]
@@ -248,6 +250,10 @@ type Point() =
 
     [<JsonProperty("outline_colors")>]
     member val OutlineColors : string[] Option = None with get, set
+
+    /// Check to see if shapes should be serialized or not
+    member self.ShouldSerializeShapes() = 
+        shouldSerialize self.Shapes
 
     /// Sets the data from a sequence of tuples
     override self.Data(data: seq<#value>) =
