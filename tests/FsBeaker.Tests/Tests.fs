@@ -16,10 +16,7 @@ type TestClass() =
         let newCode = str.Replace(findString, "")
         newCode, lineIndex, charIndex
 
-    [<Test>]
-    member __.TestKernel() = 
-    
-        use client = ConsoleKernelClient.StartNewProcess()
+    let testChartAndIntellisense(client: ConsoleKernelClient) = 
         let code = 
             StringBuilder().AppendLine("[1..100]")
                 .AppendLine("|> Seq.map float")
@@ -39,6 +36,7 @@ type TestClass() =
         Assert.NotNull(intellisense2)
         Assert.AreEqual(68, intellisense2.Declarations.Length)
 
+    let testWorldBankDataAndIntellisense(client: ConsoleKernelClient) =
         let code2 = 
             StringBuilder()
                 .AppendLine("#r \"FSharp.Data.dll\"")
@@ -53,3 +51,10 @@ type TestClass() =
 
         let intellisense3 = client.Intellisense(newCode, lineIndex, charIndex)
         Assert.NotNull(intellisense3)
+
+    [<Test>]
+    member __.TestKernel() = 
+    
+        use client = ConsoleKernelClient.StartNewProcess()
+        testChartAndIntellisense client
+        testWorldBankDataAndIntellisense client

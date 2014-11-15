@@ -184,7 +184,7 @@ Target "CreateZip" (fun _ ->
     ++ ("src/FsBeaker/bin/Release/Include.fsx")
     ++ ("src/FsBeaker/bin/Release/FSharp.Core.optdata")
     ++ ("src/FsBeaker/bin/Release/FSharp.Core.sigdata")
-    |> CopyFiles(Path.Combine(workingDir, "eval", "fsharp", "lib"))
+    |> CopyFiles(Path.Combine(workingDir, "plugins", "eval", "fsharp", "lib"))
 
     // copy eval files
     let pluginsDir = Path.Combine(workingDir, "plugins")

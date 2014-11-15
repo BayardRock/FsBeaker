@@ -80,7 +80,7 @@ module KernelInternals =
         else 
             let bytes = Convert.FromBase64String(sb.ToString())
             let json = Encoding.UTF8.GetString(bytes)
-            Some <| json
+            Some(json, sb.ToString())
 
     /// Serializes an object to a string
     let serialize(o) =
@@ -177,7 +177,7 @@ type ConsoleKernel() =
     let rec loop() =
         let block = readBlock stdin
         match block with
-        | Some (json) -> 
+        | Some (json, _) -> 
             processCommands json
             loop()
         | None ->
@@ -202,24 +202,27 @@ type ConsoleKernelClient(p: Process) =
         writer.WriteLine(str)
         writer.Flush()
 
-    /// Sends on object to the process
-    let sendObj (o:obj) =
-        let v = 
-            match o with 
-            | :? IntellisenseRequest as x -> Intellisense(x)
-            | :? ExecuteRequest as x -> Execute(x)
-            | _ -> failwith "Invalid object to send"
-
-        let json = JsonConvert.SerializeObject(v)
-        let bytes = Encoding.UTF8.GetBytes(json)
-        let encodedJson = Convert.ToBase64String(bytes)
-        sendLine <| encodedJson
-        sendLine <| separator
-
     /// Sends an object to the process and blocks until something is sent back
-    let sendAndGet o =
-        sendObj o
-        readBlock reader
+    let sendAndGet(o:obj) =
+
+        /// Sends on object to the process
+        let sendObj() =
+
+            let v = 
+                match o with 
+                | :? IntellisenseRequest as x -> Intellisense(x)
+                | :? ExecuteRequest as x -> Execute(x)
+                | _ -> failwith "Invalid object to send"
+
+            let json = JsonConvert.SerializeObject(v)
+            let bytes = Encoding.UTF8.GetBytes(json)
+            let encodedJson = Convert.ToBase64String(bytes)
+            sendLine <| encodedJson
+            sendLine <| separator
+
+        lock p (fun () ->
+            sendObj()
+            readBlock reader)
 
     /// The process
     member __.Process = p
@@ -227,7 +230,7 @@ type ConsoleKernelClient(p: Process) =
     /// Executes the specified code and returns the results
     member __.Execute(req: ExecuteRequest) =
         match sendAndGet req with
-        | Some (returnJson) -> JsonConvert.DeserializeObject<ExecuteResponse>(returnJson)
+        | Some (returnJson, raw) -> JsonConvert.DeserializeObject<ExecuteResponse>(returnJson)
         | None -> failwith "Stream ended unexpectedly"
 
     /// Convenience method for executing a command
@@ -237,7 +240,7 @@ type ConsoleKernelClient(p: Process) =
     /// Performs intellisense functionality
     member __.Intellisense(req: IntellisenseRequest) =
         match sendAndGet req with
-        | Some (returnJson) -> JsonConvert.DeserializeObject<IntellisenseResponse>(returnJson)
+        | Some (returnJson, raw) -> JsonConvert.DeserializeObject<IntellisenseResponse>(returnJson)
         | None -> failwith "Stream ended unexpectedly"
 
     /// Performs intellisense functionality

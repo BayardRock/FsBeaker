@@ -11,20 +11,35 @@ type value = IConvertible
 [<AutoOpen>]
 module BeakerChartInternals = 
     
-    let BlackColor = "#FF000000"
+    let formatColor(c: Color) = String.Format("#{0:X}", c.ToArgb())
+    let getColorByName name = formatColor <| Color.FromName(name)
     let DefaultColor = "#FFC0504D"
-    let DefaultOutlineColor = BlackColor
+    let DefaultOutlineColor = getColorByName "Black"
     let pallete = 
         [|
-            String.Format("#{0:X}", Color.FromArgb(192, 80, 77).ToArgb())
-            String.Format("#{0:X}", Color.FromArgb(79, 129, 189).ToArgb())
-            String.Format("#{0:X}", Color.FromArgb(155, 187, 89).ToArgb())
-            String.Format("#{0:X}", Color.FromArgb(248, 150, 70).ToArgb())
-            String.Format("#{0:X}", Color.FromArgb(128, 100, 162).ToArgb())
-            String.Format("#{0:X}", Color.FromArgb(75, 172, 198).ToArgb())
+            formatColor <| Color.FromArgb(192, 80, 77)
+            formatColor <| Color.FromArgb(79, 129, 189)
+            formatColor <| Color.FromArgb(155, 187, 89)
+            formatColor <| Color.FromArgb(248, 150, 70)
+            formatColor <| Color.FromArgb(128, 100, 162)
+            formatColor <| Color.FromArgb(75, 172, 198)
         |]
 
     let getColor i = pallete.[i % pallete.Length]
+
+    /// Calls f with v and returns s
+    let setAndReturn s f v = 
+        f(v)
+        s
+
+    let internal genCode2(items:string) = 
+        let variables = 
+            items.Split(',')
+            |> Seq.map (fun x -> x.Trim().TrimStart([|'?'|]))
+
+        let str = String.Join("\r\n", [| for v in variables do yield "member self.With" + v + "(x) = setAndReturn self self.set_" + v + " x" |])
+        //System.Windows.Forms.Clipboard.SetText(str)
+        str
 
     /// This is useful when generating code, kept here
     let internal genCode(items:string) = 
@@ -34,12 +49,6 @@ module BeakerChartInternals =
 
         let str = String.Join(", ", [| for v in variables do yield "?" + v + " = " + v |])
         str
-
-    /// Converts an option to a bool None -> false, _ -> true
-    let internal shouldSerialize(o) =
-        match o with None -> false | _ -> true
-
-
 
 type ConstantLine() = class end
 type ConstantBand() = class end
@@ -88,7 +97,7 @@ type YAxis() =
     
     [<JsonProperty("upper_margin")>]
     member val UpperMargin = 0.05 with get, set
-    
+   
     [<JsonProperty("lower_bound")>]
     member val LowerBound = 0.0 with get, set
     
@@ -101,6 +110,15 @@ type YAxis() =
     [<JsonProperty("log_base")>]
     member val LogBase : int Option = None with get, set
 
+    member self.WithLabel(x) = setAndReturn self self.set_Label x
+    member self.WithAutoRange(x) = setAndReturn self self.set_AutoRange x
+    member self.WithAutoRangeIncludesZero(x) = setAndReturn self self.set_AutoRangeIncludesZero x
+    member self.WithLowerMargin(x) = setAndReturn self self.set_LowerMargin x
+    member self.WithUpperMargin(x) = setAndReturn self self.set_UpperMargin x
+    member self.WithLowerBound(x) = setAndReturn self self.set_LowerBound x
+    member self.WithLog(x) = setAndReturn self self.set_Log x
+    member self.WithLogBase(x) = setAndReturn self self.set_LogBase x
+
 type Crosshair() =
 
     [<JsonProperty("style")>]
@@ -111,6 +129,10 @@ type Crosshair() =
 
     [<JsonProperty("color")>]
     member val Color = DefaultColor with get, set
+
+    member self.WithStyle(x) = setAndReturn self self.set_Style x
+    member self.WithWidth(x) = setAndReturn self self.set_Width x
+    member self.WithColor(x) = setAndReturn self self.set_Color x
 
 [<AbstractClass>]
 type XYGraphics() =
@@ -135,6 +157,13 @@ type XYGraphics() =
 
     [<JsonProperty("color")>]
     member val Color : string = null with get, set
+
+    member self.WithX(x) = setAndReturn self self.set_X x
+    member self.WithY(x) = setAndReturn self self.set_Y x
+    member self.WithYAxisName(x) = setAndReturn self self.set_YAxisName x
+    member self.WithColor(x) = setAndReturn self self.set_Color x
+    member self.WithVisible(x) = setAndReturn self self.set_Visible x
+    member self.WithDisplayName(x) = setAndReturn self self.set_DisplayName x
 
     /// Sets the data from a sequence of tuples
     member self.Data(data: seq<#value * #value>) =
@@ -179,6 +208,11 @@ type Area() =
     [<JsonProperty("interpolation")>]
     member val Interpolation = 0 with get, set
 
+    member self.WithVisible(x) = setAndReturn self self.set_Visible x
+    member self.WithBase(x) = setAndReturn self self.set_Base x
+    member self.WithBases(x) = setAndReturn self self.set_Bases x
+    member self.WithInterpolation(x) = setAndReturn self self.set_Interpolation x
+
 type Bar() =
     inherit XYGraphics()
 
@@ -205,6 +239,14 @@ type Bar() =
     [<JsonProperty("outline_colors")>]
     member val OutlineColors : string[] Option = None with get, set
 
+    member self.WithWidth(x) = setAndReturn self self.set_Width x
+    member self.WithWidths(x) = setAndReturn self self.set_Widths x
+    member self.WithBase(x) = setAndReturn self self.set_Base x
+    member self.WithBases(x) = setAndReturn self self.set_Bases x
+    member self.WithColors(x) = setAndReturn self self.set_Colors x
+    member self.WithOutlineColor(x) = setAndReturn self self.set_OutlineColor x
+    member self.WithOutlineColors(x) = setAndReturn self self.set_OutlineColors x
+
 type Line() = 
     inherit XYGraphics()
 
@@ -218,6 +260,10 @@ type Line() =
 
     [<JsonProperty("interpolation")>]
     member val Interpolation = 1 with get, set
+
+    member self.WithWidth(x) = setAndReturn self self.set_Width x
+    member self.WithStyle(x) = setAndReturn self self.set_Style x
+    member self.WithInterpolation(x) = setAndReturn self self.set_Interpolation x
 
 type Point() = 
     inherit XYGraphics()
@@ -233,7 +279,9 @@ type Point() =
     [<JsonProperty("shape")>]
     member val Shape = ShapeType.DEFAULT with get, set
 
+    /// TODO: don't serialize to null if None, just don't serialize the property
     [<JsonProperty("shapes")>]
+    [<JsonIgnore()>]
     member val Shapes : ShapeType[] Option = None with get, set
 
     [<JsonProperty("fill")>]
@@ -251,9 +299,15 @@ type Point() =
     [<JsonProperty("outline_colors")>]
     member val OutlineColors : string[] Option = None with get, set
 
-    /// Check to see if shapes should be serialized or not
-    member self.ShouldSerializeShapes() = 
-        shouldSerialize self.Shapes
+    member self.WithSize(x) = setAndReturn self self.set_Size x
+    member self.WithSizes(x) = setAndReturn self self.set_Sizes x
+    member self.WithShape(x) = setAndReturn self self.set_Shape x
+    member self.WithShapes(x) = setAndReturn self self.set_Shapes x
+    member self.WithFill(x) = setAndReturn self self.set_Fill x
+    member self.WithFills(x) = setAndReturn self self.set_Fills x
+    member self.WithColors(x) = setAndReturn self self.set_Colors x
+    member self.WithOutlineColor(x) = setAndReturn self self.set_OutlineColor x
+    member self.WithOutlineColors(x) = setAndReturn self self.set_OutlineColors x
 
     /// Sets the data from a sequence of tuples
     override self.Data(data: seq<#value>) =
@@ -281,6 +335,12 @@ type Stem() =
     [<JsonProperty("styles")>]
     member val Styles : StrokeType[] Option = None with get, set
 
+    member self.WithBase(x) = setAndReturn self self.set_Base x
+    member self.WithBases(x) = setAndReturn self self.set_Bases x
+    member self.WithColors(x) = setAndReturn self self.set_Colors x
+    member self.WithStyle(x) = setAndReturn self self.set_Style x
+    member self.WithStyles(x) = setAndReturn self self.set_Styles x
+    
 [<AbstractClass>]
 type XYChart() = 
 
@@ -350,6 +410,27 @@ type XYChart() =
     [<JsonProperty("crosshair")>]
     member val Crosshair : Crosshair Option = None with get, set
 
+    member self.WithWidth(x) = setAndReturn self self.set_Width x
+    member self.WithHeight(x) = setAndReturn self self.set_Height x
+    member self.WithTitle(x) = setAndReturn self self.set_Title x
+    member self.WithXLabel(x) = setAndReturn self self.set_XLabel x
+    member self.WithYLabel(x) = setAndReturn self self.set_YLabel x
+    member self.WithShowLegend(x) = setAndReturn self self.set_ShowLegend x
+    member self.WithUseToolTip(x) = setAndReturn self self.set_UseToolTip x
+    member self.WithConstantLines(x) = setAndReturn self self.set_ConstantLines x
+    member self.WithConstantBands(x) = setAndReturn self self.set_ConstantBands x
+    member self.WithTexts(x) = setAndReturn self self.set_Texts x
+    member self.WithYAxes(x) = setAndReturn self self.set_YAxes x
+    member self.WithXLowerMargin(x) = setAndReturn self self.set_XLowerMargin x
+    member self.WithXUpperMargin(x) = setAndReturn self self.set_XUpperMargin x
+    member self.WithXAutoRange(x) = setAndReturn self self.set_XAutoRange x
+    member self.WithXLowerBound(x) = setAndReturn self self.set_XLowerBound x
+    member self.WithXUpperBound(x) = setAndReturn self self.set_XUpperBound x
+    member self.WithLogX(x) = setAndReturn self self.set_LogX x
+    member self.WithLogY(x) = setAndReturn self self.set_LogY x
+    member self.WithTimeZone(x) = setAndReturn self self.set_TimeZone x
+    member self.WithCrosshair(x) = setAndReturn self self.set_Crosshair x
+
     /// Assign colors if they are not assigned
     member self.AssignColors() =
         let mutable i = 0
@@ -358,14 +439,15 @@ type XYChart() =
             i <- i + 1
 
     /// Adds the graphics to the XYGraphics list
-    member self.Graphs(g: XYGraphics) =
+    member self.Graphs(g) =
         self.XYGraphics <- self.XYGraphics @ [g]
         self.AssignColors()
         self
 
     /// Adds the graphics to the XYGraphics list
-    member self.Graphs(g: XYGraphics seq) =
-        self.XYGraphics <- self.XYGraphics @ [yield! g]
+    member self.Graphs(g: seq<#XYGraphics>) =
+        let z : seq<XYGraphics> = Seq.cast g
+        self.XYGraphics <- self.XYGraphics @ [yield! z]
         self.AssignColors()
         self
 
@@ -415,6 +497,13 @@ type CombinedPlot() =
 
     [<JsonProperty("weights")>]
     member val Weights : int[] = [||] with get, set
+
+    member self.WithInitWidth(x) = setAndReturn self self.set_InitWidth x
+    member self.WithInitHeight(x) = setAndReturn self self.set_InitHeight x
+    member self.WithTitle(x) = setAndReturn self self.set_Title x
+    member self.WithXLabel(x) = setAndReturn self self.set_XLabel x
+    member self.WithSubplots(x) = setAndReturn self self.set_Subplots x
+    member self.WithWeights(x) = setAndReturn self self.set_Weights x
 
 /// Static class convenient for generating charts and plots
 /// data |> BeakerChartBeta.Line |> BeakerChartBeta.Plot
@@ -497,7 +586,10 @@ type BkChart =
     static member Stem(data: seq<#value * #value>, ?DisplayName, ?Color, ?Visible, ?Base, ?Bases, ?Colors, ?Style, ?Styles) = 
         data |> BkChart.Stem(?DisplayName = DisplayName, ?Color = Color, ?Visible = Visible, ?Base = Base, ?Bases = Bases, ?Colors = Colors, ?Style = Style, ?Styles = Styles)
 
-    static member Plot(?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
+    static member Plot(gfx, ?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
+        BkChart.Plot([gfx], ?Width = Width, ?Height = Height, ?Title = Title, ?XLabel = XLabel, ?YLabel = YLabel, ?ShowLegend = ShowLegend, ?UseToolTip = UseToolTip, ?ConstantLines = ConstantLines, ?ConstantBands = ConstantBands, ?Texts = Texts, ?YAxes = YAxes, ?XLowerMargin = XLowerMargin, ?XUpperMargin = XUpperMargin, ?XAutoRange = XAutoRange, ?XLowerBound = XLowerBound, ?XUpperBound = XUpperBound, ?LogX = LogX, ?LogY = LogY, ?TimeZone = TimeZone, ?Crosshair = Crosshair)
+
+    static member Plot(gfx: seq<#XYGraphics>, ?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
         let p = Plot()
         Width           |> Option.iter p.set_Width
         Height          |> Option.iter p.set_Height
@@ -519,7 +611,4 @@ type BkChart =
         LogY            |> Option.iter p.set_LogY
         TimeZone        |> Option.iter p.set_TimeZone
         Crosshair       |> Option.iter p.set_Crosshair
-        fun gfx -> p <|> gfx
-
-    static member Plot(gfx: XYGraphics, ?Width, ?Height, ?Title, ?XLabel, ?YLabel, ?ShowLegend, ?UseToolTip, ?ConstantLines, ?ConstantBands, ?Texts, ?YAxes, ?XLowerMargin, ?XUpperMargin, ?XAutoRange, ?XLowerBound, ?XUpperBound, ?LogX, ?LogY, ?TimeZone, ?Crosshair) = 
-        gfx |> BkChart.Plot(?Width = Width, ?Height = Height, ?Title = Title, ?XLabel = XLabel, ?YLabel = YLabel, ?ShowLegend = ShowLegend, ?UseToolTip = UseToolTip, ?ConstantLines = ConstantLines, ?ConstantBands = ConstantBands, ?Texts = Texts, ?YAxes = YAxes, ?XLowerMargin = XLowerMargin, ?XUpperMargin = XUpperMargin, ?XAutoRange = XAutoRange, ?XLowerBound = XLowerBound, ?XUpperBound = XUpperBound, ?LogX = LogX, ?LogY = LogY, ?TimeZone = TimeZone, ?Crosshair = Crosshair)
+        p.Graphs(gfx)
