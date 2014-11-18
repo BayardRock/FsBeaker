@@ -16,6 +16,13 @@ type TestClass() =
         let newCode = str.Replace(findString, "")
         newCode, lineIndex, charIndex
 
+    let testSimpleExecute(client: ConsoleKernelClient) = 
+        let code = "[1..1000]"
+        let result = client.Execute(code)
+        
+        Assert.AreEqual(ExecuteReponseStatus.OK, result.Status)
+        Assert.AreEqual("text/plain", result.Result.ContentType)
+
     let testChartAndIntellisense(client: ConsoleKernelClient) = 
         let code = 
             StringBuilder().AppendLine("[1..100]")
@@ -56,5 +63,18 @@ type TestClass() =
     member __.TestKernel() = 
     
         use client = ConsoleKernelClient.StartNewProcess()
+
+        // test sync
+        testSimpleExecute client 
         testChartAndIntellisense client
         testWorldBankDataAndIntellisense client
+
+        // test async
+        let testAll() =
+            testSimpleExecute client 
+            testChartAndIntellisense client
+            testWorldBankDataAndIntellisense client
+
+        Async.Parallel [for i in 0..20 -> async { testAll() }]
+        |> Async.RunSynchronously
+        |> ignore

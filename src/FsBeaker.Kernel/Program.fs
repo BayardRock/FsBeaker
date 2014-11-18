@@ -12,9 +12,9 @@ let main _ =
         0
     with 
         ex -> 
-            let log(msg) = 
-                try File.AppendAllText("log.txt", msg) with _ -> ()
-                stdout.WriteLine(msg)
+            let log(msg) =
+                Logging.log(msg)
+                stdout.WriteLine(msg) 
 
             let err = Evaluation.sbErr.ToString()
             let std = Evaluation.sbOut.ToString()
