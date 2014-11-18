@@ -163,8 +163,13 @@ type ConsoleKernel() =
 
     /// Gets the intellisense information and sends it back
     let processIntellisense(req: IntellisenseRequest) =
-        let (decls, startIndex) = GetDeclarations(req.Code, req.LineIndex, req.CharIndex)
-        sendObj { Declarations = decls; StartIndex = startIndex }
+        try
+            let (decls, startIndex) = GetDeclarations(req.Code, req.LineIndex, req.CharIndex)
+            sendObj { Declarations = decls; StartIndex = startIndex }
+        with
+            ex -> 
+                Logging.logException ex
+                sendObj { Declarations = [||]; StartIndex = req.CharIndex }
 
     /// Process commands
     let processCommands block = 

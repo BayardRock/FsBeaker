@@ -85,6 +85,7 @@
     <Compile Include="NuGetManager.fs" />
     <Compile Include="FsCompiler.fs" />
     <Compile Include="Util.fs" />
+    <Compile Include="Logging.fs" />
     <Compile Include="Printers.fs" />
     <Compile Include="Evaluation.fs" />
     <Compile Include="Kernel.fs" />

@@ -2,10 +2,6 @@
 open System.Diagnostics
 open System.IO
 open FsBeaker
-open Nowin
-open Microsoft.Owin.Hosting
-open Microsoft.Owin.Builder
-open Newtonsoft.Json
 
 [<EntryPoint>]
 let main args = 
@@ -14,30 +10,16 @@ let main args =
     let port = 
         match args with
         | [| port |] ->
-            match Int32.TryParse(port) with
+            match UInt16.TryParse(port) with
             | true, p -> Some p
             | false, _ -> None
-        | _ -> Some 9000
-
+        | _ -> Some 9000us
 
     match port with
     | Some (p) ->
 
-        try
-
-            let builder = AppBuilder()
-            Startup().Configuration(builder)
-            let owinApp = builder.Build()
-            let server = ServerBuilder.New().SetPort(p).SetOwinApp(owinApp).Build()
-            server.Start()
-
-            stdout.WriteLine("Successfully started server")
-            let _ = stdin.ReadLine()
-            0
-        with ex ->
-            stdout.WriteLine(ex.Message)
-            stdout.WriteLine(ex.StackTrace)
-            -1
+        Server.start(p)
+        0
 
     | None ->
         

@@ -120,7 +120,7 @@ var CodeMirrorIntellisense = function (editor)
         var startRange = { line: cursor.line, ch: autoCompleteStart.columnIndex };
         var endRange = { line: cursor.line, ch: cursor.ch };
         editor.replaceRange(itemValue, startRange, endRange);
-        editor.setSelection({ line: cursor.line, ch: cursor.ch + itemValue.length });
+        editor.setSelection({ line: cursor.line, ch: startRange.ch + itemValue.length });
         decls.setVisible(false);
         editor.focus();
     });
