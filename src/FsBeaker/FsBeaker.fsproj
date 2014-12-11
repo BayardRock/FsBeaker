@@ -64,6 +64,7 @@
     </Reference>
     <Reference Include="FSharp.Data.TypeProviders, Version=4.3.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.Build">
+      <HintPath>..\..\references\Microsoft.Build.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Build.Conversion.v12.0">
@@ -71,9 +72,11 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Build.Engine">
+      <HintPath>..\..\references\Microsoft.Build.Engine.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Build.Framework">
+      <HintPath>..\..\references\Microsoft.Build.Framework.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Build.Tasks.v12.0">

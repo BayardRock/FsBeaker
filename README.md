@@ -12,6 +12,7 @@ This is a temporary location for this project.
 ```
 
 * Download [F# plugin binaries](https://github.com/BayardRock/FsBeaker/releases)
+* **When using Windows be sure to Unblock before unzipping contents**
 * Copy `{pluginbinaries}/eval/fsharp` directory to `{beakerisntall}/config/plugins/eval/fsharp`
 * Run beaker
 
