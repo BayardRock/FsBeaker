@@ -72,6 +72,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "img", "img", "{D166AAF0-6C1
 		docs\files\img\logo.png = docs\files\img\logo.png
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "references", "references", "{FE64BD46-726E-49C4-A596-2051CFE6D759}"
+	ProjectSection(SolutionItems) = preProject
+		references\Microsoft.Build.Conversion.v12.0.dll = references\Microsoft.Build.Conversion.v12.0.dll
+		references\Microsoft.Build.dll = references\Microsoft.Build.dll
+		references\Microsoft.Build.Engine.dll = references\Microsoft.Build.Engine.dll
+		references\Microsoft.Build.Framework.dll = references\Microsoft.Build.Framework.dll
+		references\Microsoft.Build.Tasks.v12.0.dll = references\Microsoft.Build.Tasks.v12.0.dll
+		references\Microsoft.Build.Utilities.v12.0.dll = references\Microsoft.Build.Utilities.v12.0.dll
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -61,6 +61,7 @@ th {
     display: inline-block;
     vertical-align: text-top;
     margin: 2px;
+    background-position: top left;
 }
 
 .br-methods {
