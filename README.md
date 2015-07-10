@@ -5,7 +5,7 @@ This is a temporary location for this project.
 
 # Installation
 * Download [BeakerNotebook](http://beakernotebook.com/getting-started?scroll)
-* Modify `src/main/web/plugin/init` in beaker directory and add the below code
+* Modify `src/main/web/plugin/init/addevalplugins.js` in beaker directory and add the below code
 
 ```
 "FSharp": { url : "./plugins/eval/fsharp/fsharp.js", bgColor: "#378BBA", fgColor: "#FFFFFF", borderColor: "", shortName: "F#" }
