@@ -52,10 +52,13 @@ module Server =
         shell
 
     /// Creates a new shell with the specified id
-    let internal newShell() = 
-        let shellId = Guid.NewGuid().ToString()
-        shells.Add(shellId, ConsoleKernelClient.StartNewProcess())
-        shellId
+    let internal newShell(shellId) = 
+        if shells.ContainsKey(shellId) then
+            shellId
+        else
+            let shellId = Guid.NewGuid().ToString()
+            shells.Add(shellId, ConsoleKernelClient.StartNewProcess())
+            shellId
 
     /// Starts the server on the specified port
     let start port =
@@ -93,7 +96,10 @@ module Server =
         let jsonOK o = JsonConvert.SerializeObject(o) |> OK
     
         /// The getShell API call
-        let getShell _ = OK <| newShell()
+        let getShell r = 
+            required r "shellId" (fun shellId ->
+                OK <| newShell(shellId)
+            )
 
         /// The evaluate API call
         let evaluate(c: HttpContext) = 
@@ -143,6 +149,7 @@ module Server =
                     url "/fsharp/resetEnvironment"  >>= OK "Not yet implemented"
                     url "/fsharp/setShellOptions"   >>= OK "Not yet implemented"
                 ]
+                NOT_FOUND "404"
             ]
 
         stdout.WriteLine("Successfully started server")
