@@ -40,7 +40,7 @@ define(function (require, exports, bkSessionManager)
             {
                 shellId = "";
             }
-            bkHelper.httpPost(serviceBase + "/fsharp/getShell", { shellId: shellId })
+            bkHelper.httpPost(bkHelper.serverUrl(serviceBase + "/fsharp/getShell"), { shellId: shellId, sessionId: bkHelper.getSessionId() })
                 .success(cb)
                 .error(function ()
                 {
@@ -66,7 +66,7 @@ define(function (require, exports, bkSessionManager)
             $.ajax({
                 type: "POST",
                 datatype: "json",
-                url: serviceBase + "/fsharp/evaluate",
+                url: bkHelper.serverUrl(serviceBase + "/fsharp/evaluate"),
                 data: { shellId: self.settings.shellID, code: code }
             }).done(function (ret)
             {
@@ -131,7 +131,7 @@ define(function (require, exports, bkSessionManager)
             $.ajax({
                 type: "POST",
                 datatype: "json",
-                url: serviceBase + "/fsharp/autocomplete",
+                url: bkHelper.serverUrl(serviceBase + "/fsharp/autocomplete"),
                 data: { shellId: self.settings.shellID, code: code, caretPosition: cpos }
             }).done(function (x)
             {
@@ -145,14 +145,14 @@ define(function (require, exports, bkSessionManager)
             $.ajax({
                 type: "POST",
                 datatype: "json",
-                url: serviceBase + "/fsharp/exit",
+                url: bkHelper.serverUrl(serviceBase + "/fsharp/exit"),
                 data: { shellId: self.settings.shellID }
             }).done(cb);
         },
 
         updateShell: function (cb)
         {
-            bkHelper.httpPost(serviceBase + "/fsharp/setShellOptions", {
+            bkHelper.httpPost(bkHelper.serverUrl(serviceBase + "/fsharp/setShellOptions"), {
                 shellId: this.settings.shellID
             }).success(cb);
         },
@@ -267,7 +267,7 @@ define(function (require, exports, bkSessionManager)
                                     $.ajax({
                                         type: "POST",
                                         datatype: "json",
-                                        url: serviceBase + "/fsharp/intellisense",
+                                        url: bkHelper.serverUrl(serviceBase + "/fsharp/intellisense"),
                                         data: { shellId: settings.shellID, code: editor.getValue(), lineIndex: cursor.line, charIndex: cursor.ch }
                                     }).done(function (x)
                                     {
