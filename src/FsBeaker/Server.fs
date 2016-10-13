@@ -95,6 +95,9 @@ module Server =
         /// Serializes the specified object into a JSON string
         let jsonOK o = JsonConvert.SerializeObject(o) |> OK
     
+        /// Always returns "ok"
+        let ready _ = OK <| "ok"
+
         /// The getShell API call
         let getShell r = 
             required r "shellId" (fun shellId ->
@@ -102,8 +105,7 @@ module Server =
             )
 
         /// The evaluate API call
-        let evaluate(c: HttpContext) = 
-            let r = c.request
+        let evaluate r = 
             required r "shellId" (fun shellId ->
                 required r "code" (fun code ->
                     let shell = findShell shellId
@@ -137,13 +139,23 @@ module Server =
                 )
             )
 
+        /// Exits the the specified shell
+        let exit r =
+            required r "shellId" (fun shellId ->
+                if shells.ContainsKey(shellId) then 
+                    shells.[shellId].Process.Kill()
+                    shells.Remove(shellId) |> ignore
+                OK <| "ok"
+            )
+
         let app = 
             choose [
                 POST >>= choose [
+                    url "/fsharp/ready"             >>= set_header "Content-Type" "text/plain"       >>= request ready
                     url "/fsharp/getShell"          >>= set_header "Content-Type" "text/plain"       >>= request getShell
-                    url "/fsharp/evaluate"          >>= set_header "Content-Type" "application/json" >>= context evaluate
+                    url "/fsharp/evaluate"          >>= set_header "Content-Type" "application/json" >>= request evaluate
                     url "/fsharp/intellisense"      >>= set_header "Content-Type" "application/json" >>= request intellisense
-                    url "/fsharp/exit"              >>= OK "Not yet implemented"
+                    url "/fsharp/exit"              >>= set_header "Content-Type" "application/json" >>= request exit
                     url "/fsharp/cancelExecution"   >>= OK "Not yet implemented"
                     url "/fsharp/killAllThreads"    >>= OK "Not yet implemented"
                     url "/fsharp/resetEnvironment"  >>= OK "Not yet implemented"

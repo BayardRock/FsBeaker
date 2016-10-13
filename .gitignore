@@ -186,3 +186,4 @@ docs/content/release-notes.md
 /.paket
 /docs
 /README.html
+/.vs/config/applicationhost.config
